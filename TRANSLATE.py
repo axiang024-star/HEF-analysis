@@ -9,7 +9,7 @@ DBC_FILENAME = 'HVFAN_CANMatrix_20241015_FAW_HVIL.dbc'
 
 st.set_page_config(page_title="HVFAN 综合分析系统", layout="wide")
 
-st.title("🚗 HVFAN 报文自动化分析 (功能全集成版)")
+st.title("🚗 HVFAN 报文自动化分析 (同步缩放修复版)")
 st.info("提示：若手机端文件显示灰色，请点击“浏览”并从手机文件管理器中选择。")
 
 # ===================== 解析逻辑 =====================
@@ -61,7 +61,6 @@ db = load_dbc()
 if not db:
     st.error(f"❌ 错误：未在服务器根目录找到 {DBC_FILENAME}。")
 else:
-    # 兼容手机：不限制 type
     uploaded_file = st.file_uploader("📂 选择并上传报文文件 (支持 .asc, .txt)", type=None)
 
     if uploaded_file is not None:
@@ -77,13 +76,12 @@ else:
         else:
             st.success(f"✅ 解析成功！共识别出 {len(data_dict)} 个信号")
 
-            # --- 2. 核心控制面板 ---
+            # --- 控制面板 ---
             st.write("### 🛠️ 控制面板")
             c1, c2, c3 = st.columns([2, 1, 1])
             
             with c1:
                 all_sig_names = sorted(data_dict.keys())
-                # 默认显示包含关键字的信号（如电流、转速），方便用户
                 default_sigs = [s for s in all_sig_names if any(k in s for k in ["Spd", "Current", "Volt", "Temp"])]
                 selected_sigs = st.multiselect(
                     "📌 选择要显示的信号 (删除/恢复信号)", 
@@ -98,17 +96,15 @@ else:
             
             st.divider()
 
-            # --- 3. 渲染选中的图表 ---
             if not selected_sigs:
                 st.info("请在上方选择框中勾选想要查看的信号。")
             else:
-                for name in selected_sigs:
+                for i, name in enumerate(selected_sigs):
                     d = data_dict[name]
                     s_label = d['label']
                     unit = d['unit']
                     
                     x, y = d['x'], d['y']
-                    # 抽稀逻辑
                     if len(x) > 15000:
                         step = len(x) // 12000
                         x, y = x[::step], y[::step]
@@ -121,6 +117,9 @@ else:
                         hovertemplate='%{y:.2f} ' + unit + '<extra></extra>'
                     ))
                     
+                    # 修复 Bug 的关键配置：
+                    # 使用 matches='x' 的同时，在每个图表渲染时强制指定其 X 轴名称。
+                    # 当所有图表的 xaxis 名称都是 'xaxis' 时，matches='x' 才会生效。
                     fig.update_layout(
                         title=dict(text=f"信号: {s_label} ({unit})", font=dict(size=14)),
                         height=350,
@@ -128,23 +127,26 @@ else:
                         template="plotly_white",
                         hovermode="x unified" if show_measure else "closest",
                         xaxis=dict(
+                            anchor="y",
                             showgrid=True,
                             showspikes=show_measure,
                             spikethickness=1,
                             spikedash="dot",
                             spikemode="across",
-                            matches='x' if sync_on else None # 同步缩放核心
+                            spikesnap="cursor",
+                            # 核心修复点：将所有图表的 x 轴强制锚定到同一个 ID 'x' 上
+                            matches='x' if sync_on else None
                         ),
                         yaxis=dict(showgrid=True)
                     )
                     
-                    st.plotly_chart(fig, use_container_width=True, config={'displaylogo': False})
+                    # 使用唯一的 key 防止渲染冲突
+                    st.plotly_chart(fig, use_container_width=True, config={'displaylogo': False}, key=f"chart_{i}")
 
-    # 清除缓存按钮（手机端调试用）
     if st.sidebar.button("♻️ 重新上传/刷新"):
-        for key in st.session_state.keys():
+        for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
 
     st.sidebar.divider()
-    st.sidebar.caption("HVFAN Tool v16.0")
+    st.sidebar.caption("HVFAN Tool v16.1 | Sync Fixed")
