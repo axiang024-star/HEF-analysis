@@ -1,0 +1,180 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: Tester MCU
+
+
+BO_ 3221225472 VECTOR__INDEPENDENT_SIG_MSG: 0 Vector__XXX
+ SG_ HEF_VCU_HVILerror : 0|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ HEF_state1_Rollingcounter : 0|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ HEF_state1_Checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ HVFM_HighVoltageInterlock : 0|1@1- (1,0) [0|1] "" Vector__XXX
+
+BO_ 2566855497 FAN_2: 8 MCU
+ SG_ FAN_TMU_Spd : 48|16@1+ (1,0) [0|6500] ""  Tester
+ SG_ FAN_TMU_MCUTemp : 40|8@1+ (1,-40) [-40|210] ""  Tester
+ SG_ FAN_TMU_MotorTemp : 32|8@1+ (1,-40) [-40|210] ""  Tester
+ SG_ FAN_TMU_IInput : 23|9@1+ (0.1,0) [0|51] ""  Tester
+ SG_ FAN_TMU_UInput : 12|10@1+ (1,0) [0|1023] ""  Tester
+ SG_ Rollingcounter : 8|4@1+ (1,0) [0|15] ""  Tester
+ SG_ Checksum : 0|8@1+ (1,0) [0|255] ""  Tester
+
+BO_ 2566855241 FAN_1: 8 MCU
+ SG_ FAN_TMU_HWErrorfFlg : 63|1@1+ (1,0) [0|1] ""  Tester
+ SG_ FAN_TMU_RotorLockfFlg : 62|1@1+ (1,0) [0|1] ""  Tester
+ SG_ FAN_TMU_CanbusoffFlg : 61|1@1+ (1,0) [0|1] ""  Tester
+ SG_ FAN_TMU_OverTempMcuFlg : 60|1@1+ (1,0) [0|1] ""  Tester
+ SG_ FAN_TMU_OverTempMotorFlg : 59|1@1+ (1,0) [0|1] ""  Tester
+ SG_ FAN_TMU_OverIFlg : 58|1@1+ (1,0) [0|1] ""  Tester
+ SG_ FAN_TMU_UnderUFlg : 57|1@1+ (1,0) [0|1] ""  Tester
+ SG_ FAN_TMU_OverUFlg : 56|1@1+ (1,0) [0|1] ""  Tester
+ SG_ FAN_TMU_KL30State : 55|1@1+ (1,0) [0|1] ""  Tester
+ SG_ FAN_Swversion : 40|8@1+ (1,0) [0|255] ""  Tester
+ SG_ FAN_TMU_MaxSpd : 24|16@1+ (1,0) [0|6500] ""  Tester
+ SG_ FAN_TMU_FaultCode : 18|6@1+ (1,0) [0|63] ""  Tester
+ SG_ FAN_TMU_ErrorLevel : 16|2@1+ (1,0) [0|3] ""  Tester
+ SG_ FAN_TMU_StateFb : 12|3@1+ (1,0) [0|7] ""  Tester
+ SG_ Rollingcounter : 8|4@1+ (1,0) [0|15] ""  Tester
+ SG_ Checksum : 0|8@1+ (1,0) [0|255] ""  Tester
+
+BO_ 2566864921 A6_TMU_11: 8 Tester
+ SG_ TMU_FAN_SpdReq : 45|16@1+ (1,0) [0|6500] ""  MCU
+ SG_ TMU_FAN_ModeReq : 42|3@1+ (1,0) [0|7] ""  MCU
+
+
+
+CM_ BO_ 3221225472 "This is a message for not used signals, created by Vector CANdb++ DBC OLE DB Provider.";
+BA_DEF_ SG_  "GenSigTimeoutTime" INT 0 65535;
+BA_DEF_ SG_  "GenSigStartValue" INT 0 2147483647;
+BA_DEF_ SG_  "GenSigSendType" ENUM  "Cyclic","OnWrite","OnWriteWithRepetition","OnChange","OnChangeWithRepetition","IfActive","IfActiveWithRepetition","NoSigSendType";
+BA_DEF_ SG_  "GenSigRrmark" STRING ;
+BA_DEF_ SG_  "GenSigInactiveValue" INT 0 0;
+BA_DEF_ SG_  "GenSigCycleTimeActive" INT 0 0;
+BA_DEF_ SG_  "GenSigCycleTime" INT 0 0;
+BA_DEF_ BO_  "VFrameFormat" ENUM  "StandardCAN","ExtendedCAN","reserved","J1939PG","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","StandardCAN_FD","ExtendedCAN_FD";
+BA_DEF_ BO_  "NmAsrMessage" ENUM  "No","Yes";
+BA_DEF_ BO_  "GenMsgStartDelayTime" INT 0 300000;
+BA_DEF_ BO_  "GenMsgSendType" ENUM  "cyclic","spontaneous","cyclicIfActive","spontaneousWithDelay","cyclicAndSpontaneous","cyclicAndSpontaneousWithDelay","IfActive","NoMsgSendType";
+BA_DEF_ BO_  "GenMsgNrOfRepetition" INT 0 100000;
+BA_DEF_ BO_  "GenMsgILSupport" ENUM  "No","Yes";
+BA_DEF_ BO_  "GenMsgDelayTime" INT 0 300000;
+BA_DEF_ BO_  "GenMsgCycleTimeFast" INT 0 300000;
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 300000;
+BA_DEF_ BO_  "DiagUUDTResponse" ENUM  "No","Yse";
+BA_DEF_ BO_  "DiagState" ENUM  "No","Yes";
+BA_DEF_ BO_  "DiagResponse" ENUM  "No","Yes";
+BA_DEF_ BO_  "DiagRequest" ENUM  "No","Yes";
+BA_DEF_ BO_  "DiagConnection" INT 0 65535;
+BA_DEF_ BO_  "CANFD_BRS" ENUM  "0","1";
+BA_DEF_ BU_  "NmAsrNodeIdentifier" INT 0 255;
+BA_DEF_ BU_  "NmAsrNode" ENUM  "No","Yes";
+BA_DEF_ BU_  "NmAsrCanMsgReducedTime" INT 0 65535;
+BA_DEF_ BU_  "NmAsrCanMsgCycleOffset" INT 0 65535;
+BA_DEF_ BU_  "ILUsed" ENUM  "No","Yes";
+BA_DEF_  "ProtocolType" STRING ;
+BA_DEF_  "NmType" STRING ;
+BA_DEF_  "NmAsrWaitBusSleepTime" INT 0 65535;
+BA_DEF_  "NmAsrTimeoutTime" INT 0 65535;
+BA_DEF_  "NmAsrRepeatMessageTime" INT 0 65535;
+BA_DEF_  "NmAsrMessageCount" INT 0 255;
+BA_DEF_  "NmAsrCanMsgCycleTime" INT 0 65535;
+BA_DEF_  "NmAsrBaseAddress" HEX 0 65535;
+BA_DEF_  "Manufacturer" STRING ;
+BA_DEF_  "IlTxTimeout" INT 0 65535;
+BA_DEF_  "DBName" STRING ;
+BA_DEF_  "Baudrate" INT 1000 1000000;
+BA_DEF_  "BaudRateCANFD" INT 1000 10000000;
+BA_DEF_  "BusType" STRING ;
+BA_DEF_ BU_  "NodeLayerModules" STRING ;
+BA_DEF_ BU_  "ECU" STRING ;
+BA_DEF_ BU_  "CANoeJitterMax" INT 0 0;
+BA_DEF_ BU_  "CANoeJitterMin" INT 0 0;
+BA_DEF_ BU_  "CANoeDrift" INT 0 0;
+BA_DEF_ BU_  "CANoeStartDelay" INT 0 0;
+BA_DEF_DEF_  "GenSigTimeoutTime" 0;
+BA_DEF_DEF_  "GenSigStartValue" 0;
+BA_DEF_DEF_  "GenSigSendType" "Cyclic";
+BA_DEF_DEF_  "GenSigRrmark" "";
+BA_DEF_DEF_  "GenSigInactiveValue" 0;
+BA_DEF_DEF_  "GenSigCycleTimeActive" 0;
+BA_DEF_DEF_  "GenSigCycleTime" 0;
+BA_DEF_DEF_  "VFrameFormat" "J1939PG";
+BA_DEF_DEF_  "NmAsrMessage" "No";
+BA_DEF_DEF_  "GenMsgStartDelayTime" 0;
+BA_DEF_DEF_  "GenMsgSendType" "";
+BA_DEF_DEF_  "GenMsgNrOfRepetition" 0;
+BA_DEF_DEF_  "GenMsgILSupport" "Yes";
+BA_DEF_DEF_  "GenMsgDelayTime" 0;
+BA_DEF_DEF_  "GenMsgCycleTimeFast" 0;
+BA_DEF_DEF_  "GenMsgCycleTime" 0;
+BA_DEF_DEF_  "DiagUUDTResponse" "No";
+BA_DEF_DEF_  "DiagState" "No";
+BA_DEF_DEF_  "DiagResponse" "No";
+BA_DEF_DEF_  "DiagRequest" "No";
+BA_DEF_DEF_  "DiagConnection" 57346;
+BA_DEF_DEF_  "CANFD_BRS" "1";
+BA_DEF_DEF_  "NmAsrNodeIdentifier" 0;
+BA_DEF_DEF_  "NmAsrNode" "Yes";
+BA_DEF_DEF_  "NmAsrCanMsgReducedTime" 50;
+BA_DEF_DEF_  "NmAsrCanMsgCycleOffset" 0;
+BA_DEF_DEF_  "ILUsed" "Yes";
+BA_DEF_DEF_  "ProtocolType" "";
+BA_DEF_DEF_  "NmType" "";
+BA_DEF_DEF_  "NmAsrWaitBusSleepTime" 5000;
+BA_DEF_DEF_  "NmAsrTimeoutTime" 2000;
+BA_DEF_DEF_  "NmAsrRepeatMessageTime" 1500;
+BA_DEF_DEF_  "NmAsrMessageCount" 255;
+BA_DEF_DEF_  "NmAsrCanMsgCycleTime" 500;
+BA_DEF_DEF_  "NmAsrBaseAddress" 1024;
+BA_DEF_DEF_  "Manufacturer" "Vector";
+BA_DEF_DEF_  "IlTxTimeout" 0;
+BA_DEF_DEF_  "DBName" "";
+BA_DEF_DEF_  "Baudrate" 500000;
+BA_DEF_DEF_  "BaudRateCANFD" 2000000;
+BA_DEF_DEF_  "BusType" "";
+BA_DEF_DEF_  "NodeLayerModules" "";
+BA_DEF_DEF_  "ECU" "";
+BA_DEF_DEF_  "CANoeJitterMax" 0;
+BA_DEF_DEF_  "CANoeJitterMin" 0;
+BA_DEF_DEF_  "CANoeDrift" 0;
+BA_DEF_DEF_  "CANoeStartDelay" 0;
+BA_ "DBName" "HVFAN_CANMatrix_Test";
+BA_ "GenMsgCycleTime" BO_ 2566855497 100;
+BA_ "VFrameFormat" BO_ 2566855497 1;
+BA_ "GenMsgCycleTime" BO_ 2566855241 500;
+BA_ "VFrameFormat" BO_ 2566855241 1;
+BA_ "GenMsgCycleTime" BO_ 2566864921 500;
+BA_ "VFrameFormat" BO_ 2566864921 1;
+

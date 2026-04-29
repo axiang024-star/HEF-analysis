@@ -1,0 +1,293 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: Tester MCU
+
+
+BO_ 3221225472 VECTOR__INDEPENDENT_SIG_MSG: 0 Vector__XXX
+ SG_ HEF2_VCU_HVILerror : 0|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ HEF_VCU_HVILerror : 0|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ HEF2_FCCU_MotorTemp : 0|8@1+ (1,-40) [-40|210] "" Vector__XXX
+ SG_ HEF2_FCCU_MCUTemp : 0|8@1+ (1,-40) [-40|210] "" Vector__XXX
+ SG_ HEF2_Measurement2_Rollingcounter : 0|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ HEF2_Measurement2_Checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ HEF2_Swversion : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ HEF2_Measurement1_Rollingcounter : 0|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ HEF2_Measurement1_Checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ HEF2_FCCU_UnderUFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF2_FCCU_RotorLockfFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF2_FCCU_OverTempMotorFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF2_FCCU_OverTempMcuFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF2_FCCU_OverIFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF2_FCCU_HWErrorfFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF2_FCCU_CanbusoffFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF2_FCCU_OverUFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF2_FCCU_MaxSpd : 0|16@1+ (1,0) [0|6500] "rpm" Vector__XXX
+ SG_ HEF2_FCCU_KL30State : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF2_FCCU_FaultCode : 0|6@1+ (1,0) [0|63] "" Vector__XXX
+ SG_ HEF2_FCCU_ErrorLevel : 0|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ HEF2_state1_Rollingcounter : 0|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ HEF2_state1_Checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ ACCM_CheckValue : 0|32@1+ (1,0) [0|4294967295] "" Vector__XXX
+ SG_ PMS_ACCMSeed : 0|32@1+ (1,0) [0|4294967295] "" Vector__XXX
+ SG_ HEF2_FCCU_Spd : 0|16@1+ (1,0) [0|6500] "rpm" Vector__XXX
+ SG_ HEF2_FCCU_MCUTemp : 0|8@1+ (1,-40) [-40|210] "" Vector__XXX
+ SG_ HEF2_FCCU_MotorTemp : 0|8@1+ (1,-40) [-40|210] "" Vector__XXX
+ SG_ HEF2_FCCU_IInput : 0|9@1+ (0.1,0) [0|51] "A" Vector__XXX
+ SG_ HEF2_FCCU_UInput : 0|10@1+ (1,0) [0|1023] "V" Vector__XXX
+ SG_ HEF2_Measurement2_Rollingcounter : 0|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ HEF2_Measurement2_Checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ FCCU_HEF2_SpdReq : 0|16@1+ (1,0) [0|6500] "rpm" Vector__XXX
+ SG_ FCCU_HEF2_ModeReq : 0|3@1+ (1,0) [0|7] "" Vector__XXX
+ SG_ HEF2_state1_Rollingcounter : 0|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ HEF2_state1_Checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ HEF_FCCU_HWErrorfFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF_FCCU_RotorLockfFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF_FCCU_CanbusoffFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF_FCCU_OverTempMcuFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF_FCCU_OverTempMotorFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF_FCCU_OverIFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF_FCCU_UnderUFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF_FCCU_OverUFlg : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF_FCCU_KL30State : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HEF_Swversion : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ HEF_FCCU_MaxSpd : 0|16@1+ (1,0) [0|6500] "rpm" Vector__XXX
+ SG_ HEF_FCCU_FaultCode : 0|6@1+ (1,0) [0|63] "" Vector__XXX
+ SG_ HEF_FCCU_ErrorLevel : 0|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ HEF_FCCU_StateFb : 0|3@1+ (1,0) [0|7] "" Vector__XXX
+ SG_ HEF_Measurement1_Rollingcounter : 0|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ HEF_Measurement1_Checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1024 HVFM_HandShake: 8 MCU
+ SG_ HVFM_CheckValue : 32|32@1+ (1,0) [0|4294967295] ""  Tester
+ SG_ PMS_HVFMmSeed : 0|32@1+ (1,0) [0|4294967295] ""  Tester
+
+BO_ 2566885993 HVFM_StsInfor2: 8 MCU
+ SG_ HVFM_Spd : 48|16@1+ (1,0) [0|6500] "rpm"  Tester
+ SG_ HVFM_MCUTemp : 40|8@1+ (1,-40) [-40|210] ""  Tester
+ SG_ HVFM_MotorTemp : 32|8@1+ (1,-40) [-40|210] ""  Tester
+ SG_ HVFM_IInput : 23|9@1+ (0.1,0) [0|51] "A"  Tester
+ SG_ HVFM_UInput : 12|10@1+ (1,0) [0|1023] "V"  Tester
+ SG_ HVFM_StsInfor2RollingCounter : 8|4@1+ (1,0) [0|15] ""  Tester
+ SG_ HVFM_StsInfor2Checksum : 0|8@1+ (1,0) [0|255] ""  Tester
+
+BO_ 2566885737 HVFM_StsInfor1: 8 MCU
+ SG_ HVFM_HighVoltageInterlock : 48|2@1+ (1,0) [0|3] ""  Tester
+ SG_ HVFM_HWErrorfFlg : 63|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HVFM_RotorLockfFlg : 62|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HVFM_CanbusoffFlg : 61|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HVFM_OverTempMcuFlg : 60|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HVFM_OverTempMotorFlg : 59|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HVFM_OverIFlg : 58|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HVFM_UnderUFlg : 57|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HVFM_OverUFlg : 56|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HVFM_KL30State : 55|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HVFM_Swversion : 40|8@1+ (1,0) [0|255] ""  Tester
+ SG_ HVFM_MaxSpd : 24|16@1+ (1,0) [0|6500] "rpm"  Tester
+ SG_ HVFM_FaultCode : 18|6@1+ (1,0) [0|63] ""  Tester
+ SG_ HVFM_ErrorLevel : 16|2@1+ (1,0) [0|3] ""  Tester
+ SG_ HVFM_StateFb : 12|3@1+ (1,0) [0|7] ""  Tester
+ SG_ HVFM_StsInfor1RollingCounter : 8|4@1+ (1,0) [0|15] ""  Tester
+ SG_ HVFM_StsInfor1Checksum : 0|8@1+ (1,0) [0|255] ""  Tester
+
+BO_ 2566885415 PMS_HVFMCtrl: 8 Tester
+ SG_ PMS_HVFANSpdReq : 16|16@1+ (1,0) [0|6500] "rpm"  MCU
+ SG_ PMS_HVFANModeReq : 12|3@1+ (1,0) [0|7] ""  MCU
+ SG_ PMS_HVFMCtrlRollingCounter : 8|4@1+ (1,0) [0|15] ""  MCU
+ SG_ PMS_HVFMCtrlChecksum : 0|8@1+ (1,0) [0|255] ""  MCU
+
+BO_ 2566650762 FAN_Measurement3: 8 MCU
+ SG_ HEF_Flag_ReStart : 0|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_uTnetUnderVoltLimn : 15|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_uTnetUnderVolt : 13|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_uTnetOverVoltLimn : 14|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_uTnetOverVoltHw : 2|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_uTnetOverVolt : 12|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_uT30UnderVolt : 4|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_uT30OverVolt : 5|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_uT15Lost : 28|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_uStrPlaus : 34|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_uGtrVoltErr : 27|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_ReqSpdUnderRng : 6|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_ReqSpdOverRng : 7|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_ReqEmgyShutoff : 40|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_pwrTnetOverPwrLimn : 25|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_PwmTaskWdgTout : 37|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_MemErr : 33|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_IvtrTempSnsr : 18|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_IvtrOverTempLimn : 16|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_IvtrOverTemp : 17|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_IvtrFltStsHw : 1|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_iTnetPlaus : 24|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_iTnetOverCurrLimn : 22|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_iTnetOverCurr : 23|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_iPhaSnsrErr : 11|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_iPhaPlaus : 10|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_iPhaOverCurrHw : 3|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_iPhaOverCurr : 8|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_iPhaOffsPlaus : 9|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_HvInterlockFault : 31|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_EmStartFailure : 29|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_EmSpdCtrlErr : 35|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_EmRotorStuck : 36|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_EmReStartFailure : 30|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_EmOverSpd : 32|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_EmMissSpeed : 26|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_CPUTaskRateHiRng : 38|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_CANComTout : 19|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_CANComMsg : 21|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_CANComBusoff : 20|1@1+ (1,0) [0|1] ""  Tester
+ SG_ HEF_DFC_BemfPlaus : 39|1@1+ (1,0) [0|1] ""  Tester
+
+BO_ 2566838889 HVFM_VerInfo: 8 MCU
+ SG_ HVFM_SWCompileYear : 32|8@1+ (1,2000) [2000|2255] ""  Tester
+ SG_ HVFM_SWCompileMonth : 40|8@1+ (1,0) [0|12] ""  Tester
+ SG_ HVFM_SWCompileDay : 48|8@1+ (1,0) [0|31] ""  Tester
+ SG_ HVFM_SoftwareMinorVer : 24|8@1+ (1,0) [0|255] ""  Tester
+ SG_ HVFM_SoftwareMajorVer : 16|8@1+ (1,0) [0|255] ""  Tester
+ SG_ HVFM_HardwareMinorVer : 8|8@1+ (1,0) [0|255] ""  Tester
+ SG_ HVFM_HardwareMajorVer : 0|8@1+ (1,0) [0|255] ""  Tester
+
+
+
+CM_ BO_ 3221225472 "This is a message for not used signals, created by Vector CANdb++ DBC OLE DB Provider.";
+BA_DEF_ SG_  "GenSigTimeoutTime" INT 0 65535;
+BA_DEF_ SG_  "GenSigStartValue" INT 0 2147483647;
+BA_DEF_ SG_  "GenSigSendType" ENUM  "Cyclic","OnWrite","OnWriteWithRepetition","OnChange","OnChangeWithRepetition","IfActive","IfActiveWithRepetition","NoSigSendType";
+BA_DEF_ SG_  "GenSigRrmark" STRING ;
+BA_DEF_ SG_  "GenSigInactiveValue" INT 0 0;
+BA_DEF_ SG_  "GenSigCycleTimeActive" INT 0 0;
+BA_DEF_ SG_  "GenSigCycleTime" INT 0 0;
+BA_DEF_ BO_  "VFrameFormat" ENUM  "StandardCAN","ExtendedCAN","reserved","J1939PG","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","StandardCAN_FD","ExtendedCAN_FD";
+BA_DEF_ BO_  "NmAsrMessage" ENUM  "No","Yes";
+BA_DEF_ BO_  "GenMsgStartDelayTime" INT 0 300000;
+BA_DEF_ BO_  "GenMsgSendType" ENUM  "cyclic","spontaneous","cyclicIfActive","spontaneousWithDelay","cyclicAndSpontaneous","cyclicAndSpontaneousWithDelay","IfActive","NoMsgSendType";
+BA_DEF_ BO_  "GenMsgNrOfRepetition" INT 0 100000;
+BA_DEF_ BO_  "GenMsgILSupport" ENUM  "No","Yes";
+BA_DEF_ BO_  "GenMsgDelayTime" INT 0 300000;
+BA_DEF_ BO_  "GenMsgCycleTimeFast" INT 0 300000;
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 300000;
+BA_DEF_ BO_  "DiagUUDTResponse" ENUM  "No","Yse";
+BA_DEF_ BO_  "DiagState" ENUM  "No","Yes";
+BA_DEF_ BO_  "DiagResponse" ENUM  "No","Yes";
+BA_DEF_ BO_  "DiagRequest" ENUM  "No","Yes";
+BA_DEF_ BO_  "DiagConnection" INT 0 65535;
+BA_DEF_ BO_  "CANFD_BRS" ENUM  "0","1";
+BA_DEF_ BU_  "NmAsrNodeIdentifier" INT 0 255;
+BA_DEF_ BU_  "NmAsrNode" ENUM  "No","Yes";
+BA_DEF_ BU_  "NmAsrCanMsgReducedTime" INT 0 65535;
+BA_DEF_ BU_  "NmAsrCanMsgCycleOffset" INT 0 65535;
+BA_DEF_ BU_  "ILUsed" ENUM  "No","Yes";
+BA_DEF_  "ProtocolType" STRING ;
+BA_DEF_  "NmType" STRING ;
+BA_DEF_  "NmAsrWaitBusSleepTime" INT 0 65535;
+BA_DEF_  "NmAsrTimeoutTime" INT 0 65535;
+BA_DEF_  "NmAsrRepeatMessageTime" INT 0 65535;
+BA_DEF_  "NmAsrMessageCount" INT 0 255;
+BA_DEF_  "NmAsrCanMsgCycleTime" INT 0 65535;
+BA_DEF_  "NmAsrBaseAddress" HEX 0 65535;
+BA_DEF_  "Manufacturer" STRING ;
+BA_DEF_  "IlTxTimeout" INT 0 65535;
+BA_DEF_  "DBName" STRING ;
+BA_DEF_  "Baudrate" INT 1000 1000000;
+BA_DEF_  "BaudRateCANFD" INT 1000 10000000;
+BA_DEF_  "BusType" STRING ;
+BA_DEF_ BU_  "NodeLayerModules" STRING ;
+BA_DEF_ BU_  "ECU" STRING ;
+BA_DEF_ BU_  "CANoeJitterMax" INT 0 0;
+BA_DEF_ BU_  "CANoeJitterMin" INT 0 0;
+BA_DEF_ BU_  "CANoeDrift" INT 0 0;
+BA_DEF_ BU_  "CANoeStartDelay" INT 0 0;
+BA_DEF_DEF_  "GenSigTimeoutTime" 0;
+BA_DEF_DEF_  "GenSigStartValue" 0;
+BA_DEF_DEF_  "GenSigSendType" "Cyclic";
+BA_DEF_DEF_  "GenSigRrmark" "";
+BA_DEF_DEF_  "GenSigInactiveValue" 0;
+BA_DEF_DEF_  "GenSigCycleTimeActive" 0;
+BA_DEF_DEF_  "GenSigCycleTime" 0;
+BA_DEF_DEF_  "VFrameFormat" "J1939PG";
+BA_DEF_DEF_  "NmAsrMessage" "No";
+BA_DEF_DEF_  "GenMsgStartDelayTime" 0;
+BA_DEF_DEF_  "GenMsgSendType" "";
+BA_DEF_DEF_  "GenMsgNrOfRepetition" 0;
+BA_DEF_DEF_  "GenMsgILSupport" "Yes";
+BA_DEF_DEF_  "GenMsgDelayTime" 0;
+BA_DEF_DEF_  "GenMsgCycleTimeFast" 0;
+BA_DEF_DEF_  "GenMsgCycleTime" 0;
+BA_DEF_DEF_  "DiagUUDTResponse" "No";
+BA_DEF_DEF_  "DiagState" "No";
+BA_DEF_DEF_  "DiagResponse" "No";
+BA_DEF_DEF_  "DiagRequest" "No";
+BA_DEF_DEF_  "DiagConnection" 57346;
+BA_DEF_DEF_  "CANFD_BRS" "1";
+BA_DEF_DEF_  "NmAsrNodeIdentifier" 0;
+BA_DEF_DEF_  "NmAsrNode" "Yes";
+BA_DEF_DEF_  "NmAsrCanMsgReducedTime" 50;
+BA_DEF_DEF_  "NmAsrCanMsgCycleOffset" 0;
+BA_DEF_DEF_  "ILUsed" "Yes";
+BA_DEF_DEF_  "ProtocolType" "";
+BA_DEF_DEF_  "NmType" "";
+BA_DEF_DEF_  "NmAsrWaitBusSleepTime" 5000;
+BA_DEF_DEF_  "NmAsrTimeoutTime" 2000;
+BA_DEF_DEF_  "NmAsrRepeatMessageTime" 1500;
+BA_DEF_DEF_  "NmAsrMessageCount" 255;
+BA_DEF_DEF_  "NmAsrCanMsgCycleTime" 500;
+BA_DEF_DEF_  "NmAsrBaseAddress" 1024;
+BA_DEF_DEF_  "Manufacturer" "Vector";
+BA_DEF_DEF_  "IlTxTimeout" 0;
+BA_DEF_DEF_  "DBName" "";
+BA_DEF_DEF_  "Baudrate" 500000;
+BA_DEF_DEF_  "BaudRateCANFD" 2000000;
+BA_DEF_DEF_  "BusType" "";
+BA_DEF_DEF_  "NodeLayerModules" "";
+BA_DEF_DEF_  "ECU" "";
+BA_DEF_DEF_  "CANoeJitterMax" 0;
+BA_DEF_DEF_  "CANoeJitterMin" 0;
+BA_DEF_DEF_  "CANoeDrift" 0;
+BA_DEF_DEF_  "CANoeStartDelay" 0;
+BA_ "DBName" "HVFAN_CANMatrix_Test";
+BA_ "VFrameFormat" BO_ 1024 0;
+BA_ "GenMsgCycleTime" BO_ 1024 1000;
+BA_ "GenMsgCycleTime" BO_ 2566885993 100;
+BA_ "VFrameFormat" BO_ 2566885993 1;
+BA_ "GenMsgCycleTime" BO_ 2566885737 100;
+BA_ "VFrameFormat" BO_ 2566885737 1;
+BA_ "GenMsgCycleTime" BO_ 2566885415 100;
+BA_ "VFrameFormat" BO_ 2566885415 1;
+BA_ "GenMsgCycleTime" BO_ 2566650762 100;
+BA_ "VFrameFormat" BO_ 2566650762 1;
+BA_ "GenMsgCycleTime" BO_ 2566838889 1000;
+BA_ "VFrameFormat" BO_ 2566838889 1;
+
