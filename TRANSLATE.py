@@ -6,7 +6,7 @@ import json
 import streamlit.components.v1 as components
 
 # ===================== 1. 核心配置 =====================
-st.set_page_config(page_title="HVFAN 综合分析系统 (多DBC合并版)", layout="wide")
+st.set_page_config(page_title="HVFAN 综合分析系统 (全功能修复版)", layout="wide")
 
 # ===================== 2. 解析引擎 (路径增强与合并版) =====================
 
@@ -16,7 +16,7 @@ def load_all_local_dbcs():
     自动扫描当前脚本同级目录下所有的 .dbc 文件并合并为一个数据库
     """
     db = cantools.database.Database()
-    # 关键：动态获取当前文件绝对路径
+    # 动态获取当前文件绝对路径，确保在云端环境下也能精准定位
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     # 扫描目录下所有以 .dbc 结尾的文件
@@ -36,13 +36,13 @@ def load_all_local_dbcs():
                 db.add_dbc_file(file_path, encoding='utf-8')
             success_files.append(file_name)
         except Exception as e:
-            st.error(f"解析 {file_name} 失败: {e}")
+            st.error(f"解析仓库内文件 {file_name} 失败: {e}")
             
     return db, success_files
 
 def process_asc(file_content, db):
     """
-    ASC 报文解析逻辑 (保持原版正则与逻辑)
+    ASC 报文解析逻辑
     """
     data_dict = {}
     frame_re = re.compile(r'^\s*(?P<time>\d+\.\d+)\s+(?P<channel>\d+)\s+(?P<id>[0-9A-Fa-f]+)x?\s+Rx\s+d\s+(?P<dlc>\d+)\s+(?P<data>(?:[0-9A-Fa-f]{2}\s*)+)', re.MULTILINE)
@@ -61,7 +61,6 @@ def process_asc(file_content, db):
             try:
                 t, cid = float(m.group('time')), int(m.group('id'), 16)
                 raw = bytearray.fromhex(m.group('data').replace(' ', ''))
-                # 从合并后的 DB 中检索 ID
                 msg = db.get_message_by_frame_id(cid)
                 decoded = msg.decode(raw)
                 for s_n, s_v in decoded.items():
@@ -79,45 +78,60 @@ def process_asc(file_content, db):
 
 # ===================== 3. UI 交互逻辑 =====================
 
-# 1. 自动加载本地协议库
+# 1. 自动加载仓库本地协议库
 db, dbc_list = load_all_local_dbcs()
 
-st.title("🚗 HVFAN 报文分析 (多DBC合并版)")
+st.title("🚗 HVFAN 报文分析 (PC/手机全兼容版)")
 
 # 侧边栏状态指示
 with st.sidebar:
-    st.header("📂 已加载协议库")
+    st.header("📂 协议库状态")
     if not db:
-        st.error("❌ 未在仓库根目录检测到任何 .dbc 文件")
-        st.info("请检查文件名后缀是否为小写 .dbc 并提交至 GitHub")
+        st.warning("⚠️ 仓库内未检测到 DBC 文件")
     else:
-        st.success(f"✅ 已识别 {len(dbc_list)} 个协议文件")
-        for name in dbc_list:
-            st.caption(f"📄 {name}")
+        st.success(f"✅ 已加载仓库内 {len(dbc_list)} 个协议")
+        with st.expander("查看协议清单"):
+            for name in dbc_list:
+                st.caption(f"📄 {name}")
     
     st.divider()
-    if st.button("♻️ 强制清除缓存并刷新"):
+    # 针对手机端灰色不可选的备用上传方案：不限制 type
+    st.write("🔧 **备用：手动上传新 DBC**")
+    manual_dbcs = st.file_uploader("若仓库无文件，在此上传", type=None, accept_multiple_files=True, key="manual_dbc")
+    
+    if manual_dbcs:
+        if db is None: db = cantools.database.Database()
+        for m_file in manual_dbcs:
+            try:
+                content = m_file.getvalue().decode('gbk', errors='ignore')
+                db.add_dbc_string(content)
+                st.sidebar.info(f"已临时加载: {m_file.name}")
+            except:
+                st.sidebar.error(f"解析 {m_file.name} 失败")
+
+    if st.button("♻️ 强制重置所有缓存"):
         st.session_state.clear()
         st.rerun()
-    st.caption("HVFAN Tool v17.7 | Multi-DBC Fixed")
+    st.caption("v17.8 | Fix Mobile Greyscale Issue")
 
-# 主界面逻辑
+# 主界面：ASC 上传
 if not db:
-    st.warning("⚠️ 请先将 DBC 文件上传至 GitHub 仓库根目录，然后刷新页面。")
+    st.info("💡 请先将 DBC 文件放入 GitHub 仓库根目录或在左侧手动上传。")
 else:
-    uploaded_file = st.file_uploader("📂 选择并上传报文文件 (.asc)", type=None)
+    # 关键修改：type=None 解决手机端文件灰色无法点击的问题
+    uploaded_file = st.file_uploader("📂 第一步：选择并上传报文文件 (.asc)", type=None)
 
     if uploaded_file is not None:
         file_key = f"data_{uploaded_file.name}_{uploaded_file.size}"
         if 'current_file' not in st.session_state or st.session_state.current_file != file_key:
-            with st.spinner('🔍 正在结合多 DBC 深度解析报文...'):
+            with st.spinner('🔍 正在结合协议解析报文...'):
                 st.session_state.full_data = process_asc(uploaded_file.read(), db)
                 st.session_state.current_file = file_key
         
         full_data = st.session_state.full_data
 
         if not full_data:
-            st.error("⚠️ 未能匹配到信号。请确认 ASC 内的 ID 是否包含在已加载的 DBC 协议中。")
+            st.error("⚠️ 未能匹配到信号。请确认协议是否正确。")
         else:
             st.success(f"✅ 解析成功！识别到 {len(full_data)} 个信号")
 
@@ -126,7 +140,8 @@ else:
             c1, c2, c3 = st.columns([2, 1, 1])
             with c1:
                 all_sig_names = sorted(full_data.keys())
-                default_sigs = [s for s in all_sig_names if any(k in s for k in ["Spd", "Current", "Volt", "Temp", "Duty"])]
+                # 针对你的项目关键词进行默认筛选
+                default_sigs = [s for s in all_sig_names if any(k in s for k in ["Spd", "Current", "Volt", "Temp", "Duty", "Fan"])]
                 selected_sigs = st.multiselect("📌 信号选择", options=all_sig_names, default=default_sigs if default_sigs else all_sig_names[:2])
             with c2:
                 sync_on = st.toggle("🔗 开启同步缩放", value=True)
@@ -138,7 +153,6 @@ else:
                 for name in selected_sigs:
                     d = full_data[name]
                     x, y = d['x'], d['y']
-                    # 动态抽稀
                     limit = 10000 
                     if len(x) > limit:
                         step = len(x) // limit
@@ -167,8 +181,6 @@ else:
                         div.id = data.id;
                         div.style.marginBottom = '20px';
                         div.style.height = '350px';
-                        div.style.border = '1px solid #eee';
-                        div.style.borderRadius = '8px';
                         wrapper.appendChild(div);
                         chartIds.push(data.id);
 
