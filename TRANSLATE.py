@@ -11,7 +11,7 @@ DBC_FILENAME = 'HVFAN_CANMatrix_20241015_FAW_HVIL.dbc'
 
 st.set_page_config(page_title="HVFAN 综合分析系统", layout="wide")
 
-st.title("🚗 HVFAN 报文分析 (手机显示修复版)")
+st.title("🚗 HVFAN 报文分析 (手机显示终极修复版)")
 
 # ===================== 解析引擎 (已锁定) =====================
 @st.cache_resource
@@ -87,12 +87,12 @@ else:
                 for name in selected_sigs:
                     d = data_dict[name]
                     x, y = d['x'], d['y']
-                    if len(x) > 12000: # 抽稀锁定
+                    if len(x) > 10000: # 稍微调低抽稀阈值以适配手机内存
                         step = len(x) // 10000
                         x, y = x[::step], y[::step]
                     charts_json.append({"label": f"{d['label']} ({d['unit']})", "x": x, "y": y})
 
-                # --- 核心显示修复：增加最小高度与 IFrame 强制高度 ---
+                # --- 终极修复：增加 JS 加载检测与容器自适应 ---
                 js_sync_logic = """
                 let timer = null; const chartIds = [];
                 function broadcastRelayout(sourceId, eventData) {
@@ -104,56 +104,68 @@ else:
                     clearTimeout(timer);
                     timer = setTimeout(() => {
                         chartIds.forEach(id => { if (id !== sourceId) Plotly.relayout(id, update); });
-                    }, 30); 
+                    }, 40); 
                 }
                 """
 
                 html_template = f"""
+                <!DOCTYPE html>
                 <html>
                 <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
                     <style>
                         .chart-container {{ 
-                            margin-bottom: 15px; 
-                            background: white; 
-                            border-radius: 8px; 
-                            padding: 10px; 
-                            border: 1px solid #eee;
-                            min-height: 350px; /* 修复点：强制最小高度，防止手机端塌陷 */
+                            margin-bottom: 20px; background: white; 
+                            border-radius: 8px; padding: 10px; border: 1px solid #ddd;
+                            height: 350px; width: 95%; margin-left: auto; margin-right: auto;
                         }}
-                        body {{ font-family: sans-serif; background-color: #fcfcfc; margin: 0; }}
-                        #wrapper {{ padding: 5px; }}
+                        body {{ font-family: -apple-system, system-ui, sans-serif; background-color: #ffffff; margin: 0; }}
                     </style>
                 </head>
                 <body>
-                    <script>window.syncEnabled = {str(sync_on).lower()}; {js_sync_logic}</script>
                     <div id="wrapper">
                 """
 
                 for i, c in enumerate(charts_json):
                     div_id = f"chart_{i}"
                     fig_layout = {
-                        "title": {"text": c['label'], "font": {"size": 14}},
-                        "height": 350,
-                        "template": "plotly_white",
+                        "title": {"text": c['label'], "font": {"size": 16}, "y": 0.95},
+                        "autosize": True, "height": 350, "template": "plotly_white",
                         "hovermode": "x unified" if show_measure else "closest",
-                        "margin": {"l": 50, "r": 20, "t": 40, "b": 40},
+                        "margin": {"l": 40, "r": 20, "t": 60, "b": 40},
                         "xaxis": {"showgrid": True, "showspikes": show_measure, "spikemode": "across", "spikedash": "dot"}
                     }
                     html_template += f"""
-                    <div class="chart-container"><div id="{div_id}" style="width:100%; height:350px;"></div></div>
+                    <div class="chart-container" id="parent_{div_id}"><div id="{div_id}" style="width:100%; height:100%;"></div></div>
                     <script>
                         chartIds.push("{div_id}");
-                        Plotly.newPlot("{div_id}", [{{"x": {json.dumps(c['x'])}, "y": {json.dumps(c['y'])}, "type": "scatter", "mode": "lines", "line": {{"width": 1.5, "color": "#174ea6"}}}}], {json.dumps(fig_layout)}, {{responsive: true, displaylogo: false}});
-                        document.getElementById("{div_id}").on('plotly_relayout', (data) => broadcastRelayout("{div_id}", data));
+                        (function() {{
+                            const data = [{{"x": {json.dumps(c['x'])}, "y": {json.dumps(c['y'])}, "type": "scatter", "mode": "lines", "line": {{"width": 2, "color": "#174ea6"}}}}];
+                            const layout = {json.dumps(fig_layout)};
+                            // 延时渲染确保 DOM 已完全就绪
+                            setTimeout(() => {{
+                                Plotly.newPlot("{div_id}", data, layout, {{responsive: true, displaylogo: false, scrollZoom: true}});
+                                document.getElementById("{div_id}").on('plotly_relayout', (data) => broadcastRelayout("{div_id}", data));
+                            }}, {i * 100}); // 交错渲染减轻手机 CPU 瞬间压力
+                        }})();
                     </script>
                     """
-                html_template += "</div></body></html>"
+
+                html_template += f"""
+                    </div>
+                    <script>
+                        window.syncEnabled = {str(sync_on).lower()};
+                        {js_sync_logic}
+                    </script>
+                </body>
+                </html>
+                """
                 
-                # 增加 100px 的冗余高度，确保滚动条不遮挡
-                total_height = len(selected_sigs) * 395 + 100
+                total_height = len(selected_sigs) * 380 + 100
                 components.html(html_template, height=total_height, scrolling=False)
 
     if st.sidebar.button("♻️ 强制刷新"):
         st.session_state.clear()
         st.rerun()
+    st.sidebar.caption("HVFAN Tool v17.4 | Mobile Rendering Fix")
