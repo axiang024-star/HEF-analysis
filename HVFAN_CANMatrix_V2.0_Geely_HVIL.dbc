@@ -90,10 +90,6 @@ BO_ 3221225472 VECTOR__INDEPENDENT_SIG_MSG: 0 Vector__XXX
  SG_ HEF_Measurement1_Rollingcounter : 0|4@1+ (1,0) [0|15] "" Vector__XXX
  SG_ HEF_Measurement1_Checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
 
-BO_ 1024 HVFM_HandShake: 8 MCU
- SG_ HVFM_CheckValue : 32|32@1+ (1,0) [0|4294967295] ""  Tester
- SG_ PMS_HVFMmSeed : 0|32@1+ (1,0) [0|4294967295] ""  Tester
-
 BO_ 2566885993 HVFM_StsInfor2: 8 MCU
  SG_ HVFM_Spd : 48|16@1+ (1,0) [0|6500] "rpm"  Tester
  SG_ HVFM_MCUTemp : 40|8@1+ (1,-40) [-40|210] ""  Tester
@@ -127,49 +123,6 @@ BO_ 2566885415 PMS_HVFMCtrl: 8 Tester
  SG_ PMS_HVFANModeReq : 12|3@1+ (1,0) [0|7] ""  MCU
  SG_ PMS_HVFMCtrlRollingCounter : 8|4@1+ (1,0) [0|15] ""  MCU
  SG_ PMS_HVFMCtrlChecksum : 0|8@1+ (1,0) [0|255] ""  MCU
-
-BO_ 2566650762 FAN_Measurement3: 8 MCU
- SG_ HEF_Flag_ReStart : 0|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_uTnetUnderVoltLimn : 15|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_uTnetUnderVolt : 13|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_uTnetOverVoltLimn : 14|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_uTnetOverVoltHw : 2|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_uTnetOverVolt : 12|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_uT30UnderVolt : 4|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_uT30OverVolt : 5|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_uT15Lost : 28|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_uStrPlaus : 34|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_uGtrVoltErr : 27|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_ReqSpdUnderRng : 6|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_ReqSpdOverRng : 7|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_ReqEmgyShutoff : 40|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_pwrTnetOverPwrLimn : 25|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_PwmTaskWdgTout : 37|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_MemErr : 33|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_IvtrTempSnsr : 18|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_IvtrOverTempLimn : 16|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_IvtrOverTemp : 17|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_IvtrFltStsHw : 1|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_iTnetPlaus : 24|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_iTnetOverCurrLimn : 22|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_iTnetOverCurr : 23|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_iPhaSnsrErr : 11|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_iPhaPlaus : 10|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_iPhaOverCurrHw : 3|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_iPhaOverCurr : 8|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_iPhaOffsPlaus : 9|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_HvInterlockFault : 31|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_EmStartFailure : 29|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_EmSpdCtrlErr : 35|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_EmRotorStuck : 36|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_EmReStartFailure : 30|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_EmOverSpd : 32|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_EmMissSpeed : 26|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_CPUTaskRateHiRng : 38|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_CANComTout : 19|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_CANComMsg : 21|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_CANComBusoff : 20|1@1+ (1,0) [0|1] ""  Tester
- SG_ HEF_DFC_BemfPlaus : 39|1@1+ (1,0) [0|1] ""  Tester
 
 BO_ 2566838889 HVFM_VerInfo: 8 MCU
  SG_ HVFM_SWCompileYear : 32|8@1+ (1,2000) [2000|2255] ""  Tester
@@ -278,16 +231,12 @@ BA_DEF_DEF_  "CANoeJitterMin" 0;
 BA_DEF_DEF_  "CANoeDrift" 0;
 BA_DEF_DEF_  "CANoeStartDelay" 0;
 BA_ "DBName" "HVFAN_CANMatrix_Test";
-BA_ "VFrameFormat" BO_ 1024 0;
-BA_ "GenMsgCycleTime" BO_ 1024 1000;
-BA_ "GenMsgCycleTime" BO_ 2566885993 100;
 BA_ "VFrameFormat" BO_ 2566885993 1;
-BA_ "GenMsgCycleTime" BO_ 2566885737 100;
+BA_ "GenMsgCycleTime" BO_ 2566885993 100;
 BA_ "VFrameFormat" BO_ 2566885737 1;
-BA_ "GenMsgCycleTime" BO_ 2566885415 100;
+BA_ "GenMsgCycleTime" BO_ 2566885737 100;
 BA_ "VFrameFormat" BO_ 2566885415 1;
-BA_ "GenMsgCycleTime" BO_ 2566650762 100;
-BA_ "VFrameFormat" BO_ 2566650762 1;
-BA_ "GenMsgCycleTime" BO_ 2566838889 1000;
+BA_ "GenMsgCycleTime" BO_ 2566885415 100;
 BA_ "VFrameFormat" BO_ 2566838889 1;
+BA_ "GenMsgCycleTime" BO_ 2566838889 1000;
 
