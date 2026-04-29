@@ -36,11 +36,6 @@ BS_:
 BU_: Tester MCU
 
 
-BO_ 3221225472 VECTOR__INDEPENDENT_SIG_MSG: 0 Vector__XXX
- SG_ HEF2_VCU_HVILerror : 0|2@1+ (1,0) [0|3] "" Vector__XXX
- SG_ HEF_VCU_HVILerror : 0|2@1+ (1,0) [0|3] "" Vector__XXX
- SG_ HVFM_HighVoltageInterlock : 0|1@1- (1,0) [0|1] "" Vector__XXX
-
 BO_ 2557774336 HEF_state1: 8 Tester
  SG_ FCCU_HEF_SpdReq : 16|16@1+ (1,0) [0|6500] "rpm"  MCU
  SG_ FCCU_HEF_ModeReq : 12|3@1+ (1,0) [0|7] ""  MCU
@@ -77,7 +72,6 @@ BO_ 2566649994 HEF_Measurement1: 8 MCU
 
 
 
-CM_ BO_ 3221225472 "This is a message for not used signals, created by Vector CANdb++ DBC OLE DB Provider.";
 BA_DEF_ SG_  "GenSigTimeoutTime" INT 0 65535;
 BA_DEF_ SG_  "GenSigStartValue" INT 0 2147483647;
 BA_DEF_ SG_  "GenSigSendType" ENUM  "Cyclic","OnWrite","OnWriteWithRepetition","OnChange","OnChangeWithRepetition","IfActive","IfActiveWithRepetition","NoSigSendType";
@@ -173,10 +167,10 @@ BA_DEF_DEF_  "CANoeJitterMin" 0;
 BA_DEF_DEF_  "CANoeDrift" 0;
 BA_DEF_DEF_  "CANoeStartDelay" 0;
 BA_ "DBName" "HVFAN_CANMatrix_Test";
-BA_ "GenMsgCycleTime" BO_ 2557774336 100;
 BA_ "VFrameFormat" BO_ 2557774336 1;
-BA_ "VFrameFormat" BO_ 2566650506 1;
+BA_ "GenMsgCycleTime" BO_ 2557774336 100;
 BA_ "GenMsgCycleTime" BO_ 2566650506 100;
-BA_ "VFrameFormat" BO_ 2566649994 1;
+BA_ "VFrameFormat" BO_ 2566650506 1;
 BA_ "GenMsgCycleTime" BO_ 2566649994 100;
+BA_ "VFrameFormat" BO_ 2566649994 1;
 

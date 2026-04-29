@@ -37,10 +37,8 @@ BU_: Tester MCU
 
 
 BO_ 3221225472 VECTOR__INDEPENDENT_SIG_MSG: 0 Vector__XXX
- SG_ HEF_VCU_HVILerror : 0|2@1+ (1,0) [0|3] "" Vector__XXX
  SG_ HEF_state1_Rollingcounter : 0|4@1+ (1,0) [0|15] "" Vector__XXX
  SG_ HEF_state1_Checksum : 0|8@1+ (1,0) [0|255] "" Vector__XXX
- SG_ HVFM_HighVoltageInterlock : 0|1@1- (1,0) [0|1] "" Vector__XXX
 
 BO_ 2566855497 FAN_2: 8 MCU
  SG_ FAN_TMU_Spd : 48|16@1+ (1,0) [0|6500] ""  Tester
@@ -171,10 +169,10 @@ BA_DEF_DEF_  "CANoeJitterMin" 0;
 BA_DEF_DEF_  "CANoeDrift" 0;
 BA_DEF_DEF_  "CANoeStartDelay" 0;
 BA_ "DBName" "HVFAN_CANMatrix_Test";
-BA_ "GenMsgCycleTime" BO_ 2566855497 100;
 BA_ "VFrameFormat" BO_ 2566855497 1;
-BA_ "GenMsgCycleTime" BO_ 2566855241 500;
+BA_ "GenMsgCycleTime" BO_ 2566855497 100;
 BA_ "VFrameFormat" BO_ 2566855241 1;
-BA_ "GenMsgCycleTime" BO_ 2566864921 500;
+BA_ "GenMsgCycleTime" BO_ 2566855241 500;
 BA_ "VFrameFormat" BO_ 2566864921 1;
+BA_ "GenMsgCycleTime" BO_ 2566864921 500;
 
