@@ -18,11 +18,22 @@ def load_dbc():
             return cantools.database.load_file(DBC_FILENAME, encoding='utf-8')
     return None
 
-# ===================== 2. 解析引擎 (含强制关联补丁) =====================
+# ===================== 2. 增强型解析引擎 =====================
 def process_asc(file_content, db):
     data_dict = {}
-    frame_re = re.compile(r'^\s*(?P<time>\d+\.\d+)\s+(?P<channel>\d+)\s+(?P<id>[0-9A-Fa-f]+)x?\s+Rx\s+d\s+(?P<dlc>\d+)\s+(?P<data>(?:[0-9A-Fa-f]{2}\s*)+)', re.MULTILINE)
     
+    # 增强版正则：兼容行首空格和 ID 与 Rx 之间的长间隙 (\s+)
+    frame_re = re.compile(
+        r'^\s*(?P<time>\d+\.\d+)\s+'
+        r'(?P<channel>\d+)\s+'
+        r'(?P<id>[0-9A-Fa-f]+)x?\s+'
+        r'Rx\s+d\s+'
+        r'(?P<dlc>\d+)\s+'
+        r'(?P<data>(?:[0-9A-Fa-f]{2}\s*)+)', 
+        re.MULTILINE
+    )
+    
+    # 编码自动识别
     text_data = ""
     for enc in ['utf-8', 'gbk', 'latin-1']:
         try:
@@ -30,130 +41,140 @@ def process_asc(file_content, db):
             if "Rx" in text_data: break
         except: continue
             
-    # --- 核心补丁：建立万能 ID 映射表 ---
-    # 1. 放入 DBC 的原始映射
+    # --- 核心映射表构建 ---
     master_id_map = {m.frame_id: m for m in db.messages}
     
-    # 2. 针对 PMS_HVFMCtrl (18FF9027) 的强行手动修复
+    # 【用户指定修正】强制将 18FF9027 映射到 PMS_HVFMCtrl
     try:
         target_msg = db.get_message_by_name('PMS_HVFMCtrl')
-        # 强制将报文 ID 映射到这个消息对象
+        # 强制覆盖 ID 映射逻辑
         master_id_map[0x18FF9027] = target_msg
-        master_id_map[0x98FF9027] = target_msg
-        master_id_map[0x19019027] = target_msg # DBC 原始 ID 对应的 29 位形态
+        master_id_map[0x98FF9027] = target_msg # 兼容带有优先级掩码的 ID
     except Exception as e:
-        st.sidebar.error(f"补丁加载失败: {e}")
+        st.sidebar.error(f"信号映射失败: 找不到消息 'PMS_HVFMCtrl'")
 
-    lines = [l.strip() for l in text_data.splitlines() if l.strip()]
+    # 逐行扫描解析
+    lines = text_data.splitlines()
     for line in lines:
-        m = frame_re.match(line)
-        if m:
+        line = line.strip()
+        if not line: continue
+        
+        match = frame_re.match(line)
+        if match:
             try:
-                t = float(m.group('time'))
-                cid = int(m.group('id'), 16)
+                timestamp = float(match.group('time'))
+                raw_id = int(match.group('id'), 16)
                 
-                # 优先级查找：手动补丁 > 原始 ID > 29位掩码 ID
-                msg = master_id_map.get(cid) or master_id_map.get(cid & 0x1FFFFFFF)
+                # 查找消息定义：先查映射表，再查 29位掩码
+                msg = master_id_map.get(raw_id) or master_id_map.get(raw_id & 0x1FFFFFFF)
                 
                 if msg:
-                    raw = bytearray.fromhex(m.group('data').replace(' ', ''))
-                    # 鲁棒性：自动对齐长度，防止数据不足报错
-                    if len(raw) < msg.length:
-                        raw.extend([0] * (msg.length - len(raw)))
+                    raw_hex = match.group('data').strip().replace(' ', '')
+                    raw_bytes = bytearray.fromhex(raw_hex)
+                    
+                    # 长度自动补齐 (防止 ASC DLC 小于 DBC 定义时报错)
+                    if len(raw_bytes) < msg.length:
+                        raw_bytes.extend([0] * (msg.length - len(raw_bytes)))
                         
-                    decoded = msg.decode(raw)
-                    for s_n, s_v in decoded.items():
-                        full_n = f"{msg.name}::{s_n}"
-                        if full_n not in data_dict:
-                            sig_obj = msg.get_signal_by_name(s_n)
-                            data_dict[full_n] = {
+                    # 解码信号
+                    decoded = msg.decode(raw_bytes[:msg.length])
+                    for sig_name, sig_val in decoded.items():
+                        full_name = f"{msg.name}::{sig_name}"
+                        if full_name not in data_dict:
+                            try:
+                                sig_obj = msg.get_signal_by_name(sig_name)
+                                unit = sig_obj.unit or ""
+                            except:
+                                unit = ""
+                            data_dict[full_name] = {
                                 'x': [], 'y': [], 
-                                'unit': sig_obj.unit or "", 
-                                'label': s_n
+                                'unit': unit, 
+                                'label': sig_name
                             }
-                        data_dict[full_n]['x'].append(t)
-                        data_dict[full_n]['y'].append(s_v)
+                        data_dict[full_name]['x'].append(timestamp)
+                        data_dict[full_name]['y'].append(sig_val)
             except:
                 continue
     return data_dict
 
-# ===================== 3. UI 渲染 =====================
+# ===================== 3. Streamlit UI 逻辑 =====================
 db = load_dbc()
-st.title("🚗 HVFAN 综合分析系统 (全协议兼容版)")
+st.title("🚗 HVFAN 综合分析系统")
 
 if not db:
-    st.error(f"❌ 缺失 DBC 文件: {DBC_FILENAME}")
+    st.error(f"❌ 未找到 DBC 文件: {DBC_FILENAME}")
 else:
-    uploaded_file = st.file_uploader("📂 选择报文文件", type=None)
+    uploaded_file = st.file_uploader("📂 上传 ASC 报文文件", type=['asc', 'txt'])
 
     if uploaded_file:
-        file_key = f"data_{uploaded_file.name}_{uploaded_file.size}"
-        if 'current_file' not in st.session_state or st.session_state.current_file != file_key:
-            with st.spinner('🔍 正在应用 ID 补丁并解析...'):
+        file_key = f"{uploaded_file.name}_{uploaded_file.size}"
+        if 'full_data' not in st.session_state or st.session_state.get('file_key') != file_key:
+            with st.spinner('🚀 正在解析报文并应用 18FF9027 映射补丁...'):
                 st.session_state.full_data = process_asc(uploaded_file.read(), db)
-                st.session_state.current_file = file_key
+                st.session_state.file_key = file_key
         
         full_data = st.session_state.full_data
 
         if not full_data:
-            st.warning("⚠️ 解析失败。请检查 ASC 文件 ID 是否为 18FF9027。")
+            st.warning("⚠️ 未能解析到有效信号。请确认 ASC 内容符合 Vector 格式且包含 Rx 标志。")
         else:
-            st.success(f"✅ 解析成功！已识别信号: {len(full_data)}")
+            st.success(f"✅ 解析完成！找到信号: {len(full_data)}")
             
-            # --- 控制面板 ---
-            all_sig_names = sorted(full_data.keys())
-            # 自动寻找关键信号
-            default_sigs = [s for s in all_sig_names if any(k in s for k in ["Spd", "IInput", "Temp", "ModeReq"])]
+            # --- 交互式控制 ---
+            all_sigs = sorted(full_data.keys())
+            # 预设常用观测信号
+            default_selection = [s for s in all_sigs if any(k in s for k in ["Spd", "Temp", "IInput", "HVFMCtrl"])]
             
-            selected_sigs = st.multiselect("📌 信号管理", options=all_sig_names, default=default_sigs[:5])
+            selected = st.multiselect("📊 选择观测信号", options=all_sigs, default=default_selection[:6])
             
             c1, c2 = st.columns(2)
-            sync_on = c1.toggle("🔗 开启同步缩放", value=True)
-            show_measure = c2.toggle("📏 开启测量轴", value=True)
+            sync_on = c1.toggle("🔗 时间轴同步", value=True)
+            measure_on = c2.toggle("📏 显示测量线", value=True)
 
-            if selected_sigs:
-                charts_to_render = []
-                for name in selected_sigs:
+            if selected:
+                render_list = []
+                for name in selected:
                     d = full_data[name]
-                    # 动态抽稀
+                    # 动态降采样提升渲染性能
                     step = max(1, len(d['x']) // 10000)
-                    charts_to_render.append({
-                        "id": f"ch_{hash(name)}",
+                    render_list.append({
+                        "id": f"chart_{abs(hash(name))}",
                         "title": f"{name} ({d['unit']})",
                         "x": d['x'][::step], "y": d['y'][::step]
                     })
 
-                js_logic = f"""
+                # JavaScript 联动绘图逻辑
+                js_code = f"""
                 <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
-                <div id="chart-wrapper"></div>
+                <div id="viz-container"></div>
                 <script>
-                    const data = {json.dumps(charts_to_render)};
-                    const wrapper = document.getElementById('chart-wrapper');
+                    const chartData = {json.dumps(render_list)};
+                    const container = document.getElementById('viz-container');
                     const ids = [];
-                    let relayouting = false;
+                    let syncing = false;
 
-                    data.forEach(item => {{
-                        const div = document.createElement('div');
-                        div.id = item.id;
-                        div.style.height = '350px';
-                        div.style.marginBottom = '15px';
-                        wrapper.appendChild(div);
+                    chartData.forEach(item => {{
+                        const d = document.createElement('div');
+                        d.id = item.id;
+                        d.style.height = '320px';
+                        d.style.marginBottom = '15px';
+                        container.appendChild(d);
                         ids.push(item.id);
 
                         const layout = {{
-                            title: item.title,
+                            title: {{ text: item.title, font: {{size: 14}} }},
                             template: 'plotly_white',
-                            margin: {{t:40, b:30, l:50, r:20}},
-                            hovermode: "{'x unified' if show_measure else 'closest'}",
+                            margin: {{ t: 40, b: 30, l: 60, r: 20 }},
+                            hovermode: "{'x unified' if measure_on else 'closest'}",
                             xaxis: {{ showspikes: true, spikemode: 'across', spikedash: 'dot' }}
                         }};
 
-                        Plotly.newPlot(item.id, [{{x: item.x, y: item.y, mode: 'lines'}}], layout, {{responsive: true}});
+                        Plotly.newPlot(item.id, [{{ x: item.x, y: item.y, mode: 'lines' }}], layout, {{responsive: true}});
 
                         if ({str(sync_on).lower()}) {{
-                            div.on('plotly_relayout', (ed) => {{
-                                if (relayouting) return;
-                                relayouting = true;
+                            d.on('plotly_relayout', (ed) => {{
+                                if (syncing) return;
+                                syncing = true;
                                 const update = {{}};
                                 if (ed['xaxis.range[0]']) {{
                                     update['xaxis.range[0]'] = ed['xaxis.range[0]'];
@@ -162,10 +183,10 @@ else:
                                     update['xaxis.autorange'] = true;
                                 }}
                                 const ps = ids.map(id => id !== item.id ? Plotly.relayout(id, update) : null);
-                                Promise.all(ps).finally(() => relayouting = false);
+                                Promise.all(ps).finally(() => syncing = false);
                             }});
                         }}
                     }});
                 </script>
                 """
-                components.html(js_logic, height=len(selected_sigs)*370 + 50)
+                components.html(js_code, height=len(selected)*350 + 50)
