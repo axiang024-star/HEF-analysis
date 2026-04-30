@@ -18,11 +18,11 @@ def load_dbc():
             return cantools.database.load_file(DBC_FILENAME, encoding='utf-8')
     return None
 
-# ===================== 2. 增强型解析引擎 =====================
+# ===================== 2. 深度重构解析引擎 =====================
 def process_asc(file_content, db):
     data_dict = {}
     
-    # 增强版正则：兼容行首空格和 ID 与 Rx 之间的长间隙 (\s+)
+    # 增强版正则：兼容所有空格对齐，ID 匹配部分不区分大小写
     frame_re = re.compile(
         r'^\s*(?P<time>\d+\.\d+)\s+'
         r'(?P<channel>\d+)\s+'
@@ -30,120 +30,124 @@ def process_asc(file_content, db):
         r'Rx\s+d\s+'
         r'(?P<dlc>\d+)\s+'
         r'(?P<data>(?:[0-9A-Fa-f]{2}\s*)+)', 
-        re.MULTILINE
+        re.MULTILINE | re.IGNORECASE
     )
     
-    # 编码自动识别
+    # 自动识别编码
     text_data = ""
     for enc in ['utf-8', 'gbk', 'latin-1']:
         try:
             text_data = file_content.decode(enc, errors='ignore')
             if "Rx" in text_data: break
         except: continue
-            
-    # --- 核心映射表构建 ---
-    master_id_map = {m.frame_id: m for m in db.messages}
-    
-    # 【用户指定修正】强制将 18FF9027 映射到 PMS_HVFMCtrl
-    try:
-        target_msg = db.get_message_by_name('PMS_HVFMCtrl')
-        # 强制覆盖 ID 映射逻辑
-        master_id_map[0x18FF9027] = target_msg
-        master_id_map[0x98FF9027] = target_msg # 兼容带有优先级掩码的 ID
-    except Exception as e:
-        st.sidebar.error(f"信号映射失败: 找不到消息 'PMS_HVFMCtrl'")
 
-    # 逐行扫描解析
-    lines = text_data.splitlines()
-    for line in lines:
+    # --- 核心映射逻辑优化 ---
+    # 1. 建立基础 ID 映射（包括 29位掩码后的 ID）
+    master_id_map = {}
+    for m in db.messages:
+        master_id_map[m.frame_id] = m
+        master_id_map[m.frame_id & 0x1FFFFFFF] = m
+
+    # 2. 【核心修复】：找到 PMS_HVFMCtrl 对应的那个真正“模版”
+    # 如果通过名字找不准，我们尝试通过它最可能的 ID 去反向锁定消息对象
+    pms_template = None
+    # 尝试所有可能的 ID 变体来获取消息对象
+    for target_id in [0x18FF9027, 0x18748A00, 0x18FF4019]:
+        if target_id in master_id_map:
+            pms_template = master_id_map[target_id]
+            break
+    
+    # 3. 【强行绑定】：把你要的所有 ID 全部指向那个模版
+    if pms_template:
+        force_ids = [0x18FF9027, 0x18748A00, 0x98FF9027, 0x98748A00]
+        for fid in force_ids:
+            master_id_map[fid] = pms_template
+    else:
+        st.sidebar.error("DBC 中未找到 PMS 相关的 ID 定义，请检查 DBC 内容")
+
+    # 逐行解析
+    for line in text_data.splitlines():
         line = line.strip()
         if not line: continue
         
-        match = frame_re.match(line)
-        if match:
+        m = frame_re.match(line)
+        if m:
             try:
-                timestamp = float(match.group('time'))
-                raw_id = int(match.group('id'), 16)
+                t = float(m.group('time'))
+                # 统一转为大写 ID 进行逻辑匹配
+                raw_id_hex = m.group('id').upper()
+                cid = int(raw_id_hex, 16)
                 
-                # 查找消息定义：先查映射表，再查 29位掩码
-                msg = master_id_map.get(raw_id) or master_id_map.get(raw_id & 0x1FFFFFFF)
+                # 匹配逻辑：优先找补丁映射，再找掩码映射
+                msg = master_id_map.get(cid) or master_id_map.get(cid & 0x1FFFFFFF)
                 
                 if msg:
-                    raw_hex = match.group('data').strip().replace(' ', '')
+                    raw_hex = m.group('data').strip().replace(' ', '')
                     raw_bytes = bytearray.fromhex(raw_hex)
                     
-                    # 长度自动补齐 (防止 ASC DLC 小于 DBC 定义时报错)
+                    # 鲁棒性：自动对齐长度
                     if len(raw_bytes) < msg.length:
                         raw_bytes.extend([0] * (msg.length - len(raw_bytes)))
-                        
-                    # 解码信号
+                    
+                    # 执行解码
                     decoded = msg.decode(raw_bytes[:msg.length])
-                    for sig_name, sig_val in decoded.items():
-                        full_name = f"{msg.name}::{sig_name}"
+                    for s_n, s_v in decoded.items():
+                        full_name = f"{msg.name}::{s_n}"
                         if full_name not in data_dict:
                             try:
-                                sig_obj = msg.get_signal_by_name(sig_name)
+                                sig_obj = msg.get_signal_by_name(s_n)
                                 unit = sig_obj.unit or ""
-                            except:
-                                unit = ""
-                            data_dict[full_name] = {
-                                'x': [], 'y': [], 
-                                'unit': unit, 
-                                'label': sig_name
-                            }
-                        data_dict[full_name]['x'].append(timestamp)
-                        data_dict[full_name]['y'].append(sig_val)
+                            except: unit = ""
+                            data_dict[full_name] = {'x': [], 'y': [], 'unit': unit}
+                        
+                        data_dict[full_name]['x'].append(t)
+                        data_dict[full_name]['y'].append(s_v)
             except:
                 continue
     return data_dict
 
-# ===================== 3. Streamlit UI 逻辑 =====================
+# ===================== 3. UI 逻辑 =====================
 db = load_dbc()
-st.title("🚗 HVFAN 综合分析系统")
+st.title("🚗 HVFAN 深度协议解析系统")
 
 if not db:
-    st.error(f"❌ 未找到 DBC 文件: {DBC_FILENAME}")
+    st.error(f"❌ 缺失 DBC 文件: {DBC_FILENAME}")
 else:
-    uploaded_file = st.file_uploader("📂 上传 ASC 报文文件", type=['asc', 'txt'])
+    uploaded_file = st.file_uploader("📂 上传报文", type=None)
 
     if uploaded_file:
         file_key = f"{uploaded_file.name}_{uploaded_file.size}"
         if 'full_data' not in st.session_state or st.session_state.get('file_key') != file_key:
-            with st.spinner('🚀 正在解析报文并应用 18FF9027 映射补丁...'):
+            with st.spinner('🚀 正在执行多 ID 联动解析...'):
                 st.session_state.full_data = process_asc(uploaded_file.read(), db)
                 st.session_state.file_key = file_key
         
         full_data = st.session_state.full_data
 
         if not full_data:
-            st.warning("⚠️ 未能解析到有效信号。请确认 ASC 内容符合 Vector 格式且包含 Rx 标志。")
+            st.warning("⚠️ 未识别到信号。请检查 ASC 文件中 ID 后的后缀是否为 'x' 且包含 'Rx d'。")
         else:
-            st.success(f"✅ 解析完成！找到信号: {len(full_data)}")
+            st.success(f"✅ 解析成功！已提取信号: {len(full_data)}")
             
-            # --- 交互式控制 ---
             all_sigs = sorted(full_data.keys())
-            # 预设常用观测信号
+            # 搜索默认显示的关键信号
             default_selection = [s for s in all_sigs if any(k in s for k in ["Spd", "Temp", "IInput", "HVFMCtrl"])]
+            selected = st.multiselect("📊 信号看板", options=all_sigs, default=default_selection[:6])
             
-            selected = st.multiselect("📊 选择观测信号", options=all_sigs, default=default_selection[:6])
-            
-            c1, c2 = st.columns(2)
-            sync_on = c1.toggle("🔗 时间轴同步", value=True)
-            measure_on = c2.toggle("📏 显示测量线", value=True)
+            sync_on = st.toggle("🔗 时间轴同步缩放", value=True)
 
             if selected:
                 render_list = []
                 for name in selected:
                     d = full_data[name]
-                    # 动态降采样提升渲染性能
-                    step = max(1, len(d['x']) // 10000)
+                    step = max(1, len(d['x']) // 8000)
                     render_list.append({
                         "id": f"chart_{abs(hash(name))}",
-                        "title": f"{name} ({d['unit']})",
+                        "title": name,
+                        "unit": d['unit'],
                         "x": d['x'][::step], "y": d['y'][::step]
                     })
 
-                # JavaScript 联动绘图逻辑
                 js_code = f"""
                 <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
                 <div id="viz-container"></div>
@@ -156,20 +160,21 @@ else:
                     chartData.forEach(item => {{
                         const d = document.createElement('div');
                         d.id = item.id;
-                        d.style.height = '320px';
-                        d.style.marginBottom = '15px';
+                        d.style.height = '300px';
+                        d.style.marginBottom = '10px';
                         container.appendChild(d);
                         ids.push(item.id);
 
-                        const layout = {{
-                            title: {{ text: item.title, font: {{size: 14}} }},
-                            template: 'plotly_white',
-                            margin: {{ t: 40, b: 30, l: 60, r: 20 }},
-                            hovermode: "{'x unified' if measure_on else 'closest'}",
-                            xaxis: {{ showspikes: true, spikemode: 'across', spikedash: 'dot' }}
-                        }};
-
-                        Plotly.newPlot(item.id, [{{ x: item.x, y: item.y, mode: 'lines' }}], layout, {{responsive: true}});
+                        Plotly.newPlot(item.id, [{{ 
+                            x: item.x, y: item.y, mode: 'lines', 
+                            line: {{width: 1}} 
+                        }}], {{
+                            title: {{ text: item.title + ' (' + item.unit + ')', font: {{size: 13}} }},
+                            margin: {{ t: 35, b: 30, l: 50, r: 20 }},
+                            xaxis: {{ showspikes: true, spikemode: 'across', spikedash: 'dot' }},
+                            hovermode: 'x unified',
+                            template: 'plotly_white'
+                        }}, {{responsive: true}});
 
                         if ({str(sync_on).lower()}) {{
                             d.on('plotly_relayout', (ed) => {{
@@ -189,4 +194,4 @@ else:
                     }});
                 </script>
                 """
-                components.html(js_code, height=len(selected)*350 + 50)
+                components.html(js_code, height=len(selected)*320 + 50)
