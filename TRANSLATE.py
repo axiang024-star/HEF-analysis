@@ -9,7 +9,7 @@ import streamlit.components.v1 as components
 # 【修改】支持多 DBC 文件列表
 DBC_FILENAMES = [
     'HVFAN_Merged_Geely_Foton_FAW_Master.dbc',
-    'Extra_Database_1.dbc',  # 在此添加更多 DBC 路径
+    'Geely_TMCU_V1.1_20250513_PrivateCAN 10.dbc',  # 在此添加更多 DBC 路径
 ]
 st.set_page_config(page_title="HVFAN 综合分析系统", layout="wide")
 
