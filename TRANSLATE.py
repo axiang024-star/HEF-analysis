@@ -6,23 +6,44 @@ import json
 import streamlit.components.v1 as components
 
 # ===================== 1. 核心配置 =====================
-DBC_FILENAME = 'HVFAN_Merged_Geely_Foton_FAW_Master.dbc'
+# 【修改】支持多 DBC 文件列表
+DBC_FILENAMES = [
+    'HVFAN_Merged_Geely_Foton_FAW_Master.dbc',
+    'Extra_Database_1.dbc',  # 在此添加更多 DBC 路径
+]
 st.set_page_config(page_title="HVFAN 综合分析系统", layout="wide")
 
-# ===================== 2. 解析引擎 (带缓存与多编码支持) =====================
+# ===================== 2. 解析引擎 (多DBC合并与多编码支持) =====================
 @st.cache_resource
 def load_dbc():
-    if os.path.exists(DBC_FILENAME):
-        try:
-            return cantools.database.load_file(DBC_FILENAME, encoding='gbk')
-        except:
-            return cantools.database.load_file(DBC_FILENAME, encoding='utf-8')
-    return None
+    """
+    加载多份DBC文件并合并到一个数据库对象中
+    """
+    merged_db = cantools.database.Database()
+    loaded_files = []
+    
+    for filename in DBC_FILENAMES:
+        if os.path.exists(filename):
+            try:
+                # 尝试用 gbk 加载
+                merged_db.add_dbc_file(filename, encoding='gbk')
+                loaded_files.append(filename)
+            except:
+                try:
+                    # 尝试用 utf-8 加载
+                    merged_db.add_dbc_file(filename, encoding='utf-8')
+                    loaded_files.append(filename)
+                except Exception as e:
+                    st.warning(f"⚠️ 文件 {filename} 解析失败: {str(e)}")
+        else:
+            st.warning(f"❓ 找不到文件: {filename}")
+            
+    return merged_db if loaded_files else None
 
 def process_asc(file_content, db):
     data_dict = {}
     
-    # 【已修改】正则表达式：使用 (?:Rx|Tx) 兼容发送和接收，并增强空格鲁棒性
+    # 正则表达式：保持原有的 Rx|Tx 兼容性
     frame_re = re.compile(
         r'^\s*(?P<time>\d+\.\d+)\s+(?P<channel>\d+)\s+(?P<id>[0-9A-Fa-f]+)x?\s+(?:Rx|Tx)\s+d\s+(?P<dlc>\d+)\s+(?P<data>(?:[0-9A-Fa-f]{2}\s*)+)', 
         re.MULTILINE
@@ -32,7 +53,6 @@ def process_asc(file_content, db):
     for enc in ['utf-8', 'gbk', 'latin-1']:
         try:
             text_data = file_content.decode(enc, errors='ignore')
-            # 【已修改】只要包含 Rx 或 Tx 即认为编码识别成功
             if "Rx" in text_data or "Tx" in text_data: 
                 break
         except: 
@@ -45,9 +65,13 @@ def process_asc(file_content, db):
             try:
                 t, cid = float(m.group('time')), int(m.group('id'), 16)
                 raw = bytearray.fromhex(m.group('data').replace(' ', ''))
+                
+                # 从合并后的数据库查找 ID
                 msg = db.get_message_by_frame_id(cid)
                 decoded = msg.decode(raw)
+                
                 for s_n, s_v in decoded.items():
+                    # 增加 DBC 来源标记（可选）：f"[{msg.bus_name}] {msg.name}::{s_n}"
                     full_n = f"{msg.name}::{s_n}"
                     if full_n not in data_dict:
                         data_dict[full_n] = {
@@ -63,19 +87,20 @@ def process_asc(file_content, db):
 
 # ===================== 3. UI 交互与逻辑控制 =====================
 db = load_dbc()
-st.title("🚗 HVFAN 报文分析 (PC/手机全功能修复版)")
+st.title("🚗 HVFAN 报文分析 (多DBC集成版)")
 
 if not db:
-    st.error(f"❌ 缺失 DBC 文件: {DBC_FILENAME}")
+    st.error(f"❌ 无法加载定义的 DBC 文件列表。请确认文件是否存在。")
 else:
+    # 侧边栏显示已加载库的信息
+    st.sidebar.info(f"✅ 已合并加载 {len(DBC_FILENAMES)} 份DBC")
+    
     uploaded_file = st.file_uploader("📂 选择并上传报文文件 (支持 Rx/Tx 混合 ASC)", type=None)
 
     if uploaded_file is not None:
-        # 逻辑锁定：仅在切换文件时重新解析
         file_key = f"data_{uploaded_file.name}_{uploaded_file.size}"
         if 'current_file' not in st.session_state or st.session_state.current_file != file_key:
-            with st.spinner('🔍 正在深度解析报文 (包括 Rx/Tx)...'):
-                # 重新读取内容以便解析
+            with st.spinner('🔍 正在深度解析报文 (正在匹配多DBC库)...'):
                 content = uploaded_file.read()
                 st.session_state.full_data = process_asc(content, db)
                 st.session_state.current_file = file_key
@@ -83,7 +108,7 @@ else:
         full_data = st.session_state.full_data
 
         if not full_data:
-            st.warning("⚠️ 未能解析到有效信号。请确保文件是标准的 Vector ASC 格式，且包含 Rx 或 Tx 标记。")
+            st.warning("⚠️ 未能解析到有效信号。请确保文件是标准的 Vector ASC 格式，且包含 Rx 或 Tx 标记，并与 DBC 匹配。")
         else:
             st.success(f"✅ 解析成功！共识别出 {len(full_data)} 个信号")
 
@@ -93,11 +118,10 @@ else:
             
             with c1:
                 all_sig_names = sorted(full_data.keys())
-                # 智能识别默认显示的信号
                 default_keywords = ["Spd", "Current", "Volt", "Temp", "Duty"]
                 default_sigs = [s for s in all_sig_names if any(k in s for k in default_keywords)]
                 selected_sigs = st.multiselect(
-                    "📌 信号管理 (支持搜索/删除/快速恢复)", 
+                    "📌 信号管理 (来自合并后的数据库)", 
                     options=all_sig_names, 
                     default=default_sigs if default_sigs else all_sig_names[:2]
                 )
@@ -111,7 +135,6 @@ else:
                 for name in selected_sigs:
                     d = full_data[name]
                     x, y = d['x'], d['y']
-                    # 抽稀策略：保持流畅度
                     limit = 10000 
                     if len(x) > limit:
                         step = len(x) // limit
@@ -199,4 +222,4 @@ if st.sidebar.button("♻️ 强制清除缓存并刷新"):
     st.rerun()
 
 st.sidebar.divider()
-st.sidebar.caption("HVFAN Tool v17.6 | Rx/Tx 兼容版")
+st.sidebar.caption("HVFAN Tool v18.0 | 多DBC集成 | Rx/Tx 兼容")
