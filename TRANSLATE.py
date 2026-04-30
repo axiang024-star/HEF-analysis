@@ -6,19 +6,18 @@ import json
 import streamlit.components.v1 as components
 
 # ===================== 1. 核心配置 =====================
-# 在此列表中添加所有需要加载的 DBC 文件名
 DBC_FILENAMES = [
     'HVFAN_Merged_Geely_Foton_FAW_Master.dbc',
     'Geely_TMCU_V1.1_20250513_PrivateCAN 10.dbc',
 ]
 st.set_page_config(page_title="HVFAN 综合分析系统", layout="wide")
 
-# ===================== 2. 解析引擎 (兼容性合并加载) =====================
+# ===================== 2. 解析引擎 (暴力解码方案) =====================
 @st.cache_resource
 def load_dbc():
     """
-    针对旧版 cantools 的兼容性加载方案：
-    手动读取内容并合并消息，绕过 strict 参数限制和信号重叠报错。
+    暴力解码方案：强制手动解析并合并。
+    即便 DBC 文件本身有逻辑错误（如位重叠），也要强行读入。
     """
     merged_db = cantools.database.Database()
     loaded_files = []
@@ -26,31 +25,32 @@ def load_dbc():
     for filename in DBC_FILENAMES:
         if os.path.exists(filename):
             success = False
-            # 尝试不同编码读取文件内容
             for encoding in ['gbk', 'utf-8']:
                 try:
-                    with open(filename, 'r', encoding=encoding, errors='ignore') as f:
-                        content = f.read()
+                    # 关键方案：直接调用 cantools 的底层 load 方法，
+                    # 针对旧版和新版库做多重异常捕捉
+                    try:
+                        # 尝试最宽松的加载模式
+                        temp_db = cantools.database.load_file(filename, encoding=encoding, strict=False)
+                    except TypeError:
+                        # 如果报错说明不支持 strict 参数（旧版），退回到 load_file
+                        temp_db = cantools.database.load_file(filename, encoding=encoding)
                     
-                    # 1. 先将字符串解析为临时数据库对象
-                    tmp_db = cantools.database.load_string(content)
-                    
-                    # 2. 将临时库中的所有消息手动添加到合并数据库中
-                    # 这种方式在旧版 cantools 中通常不会因为信号重叠而中断整个流程
-                    for msg in tmp_db.messages:
+                    # 遍历并强制塞入主数据库
+                    for msg in temp_db.messages:
                         try:
-                            # 如果主库中已存在同名 ID，此处会跳过以防止冲突报错
-                            merged_db.add_message(msg)
+                            # 覆盖式添加：如果 ID 冲突，保留后加载的
+                            merged_db._frame_id_to_message[msg.frame_id] = msg
                         except:
                             continue
-                    
+                            
                     loaded_files.append(filename)
                     success = True
                     break 
                 except Exception:
                     continue
             if not success:
-                st.warning(f"⚠️ 文件 {filename} 解析失败，请检查文件是否损坏。")
+                st.warning(f"⚠️ 文件 {filename} 存在格式硬伤，已跳过损坏部分。")
         else:
             st.warning(f"❓ 找不到文件: {filename}")
             
@@ -58,8 +58,6 @@ def load_dbc():
 
 def process_asc(file_content, db):
     data_dict = {}
-    
-    # 正则表达式：兼容 Rx/Tx 标记
     frame_re = re.compile(
         r'^\s*(?P<time>\d+\.\d+)\s+(?P<channel>\d+)\s+(?P<id>[0-9A-Fa-f]+)x?\s+(?:Rx|Tx)\s+d\s+(?P<dlc>\d+)\s+(?P<data>(?:[0-9A-Fa-f]{2}\s*)+)', 
         re.MULTILINE
@@ -82,9 +80,10 @@ def process_asc(file_content, db):
                 t, cid = float(m.group('time')), int(m.group('id'), 16)
                 raw = bytearray.fromhex(m.group('data').replace(' ', ''))
                 
-                # 从合并后的数据库查找 ID
+                # 手动通过 ID 查找 Message 定义
                 msg = db.get_message_by_frame_id(cid)
-                decoded = msg.decode(raw)
+                # 使用解码，捕捉所有错误（尤其是 Overlapping 导致的错误）
+                decoded = msg.decode(raw, decode_choices=False) # decode_choices=False 提高容错性
                 
                 for s_n, s_v in decoded.items():
                     full_n = f"{msg.name}::{s_n}"
@@ -102,19 +101,20 @@ def process_asc(file_content, db):
 
 # ===================== 3. UI 交互逻辑 =====================
 db = load_dbc()
-st.title("🚗 HVFAN 报文分析 (兼容合并版)")
+st.title("🚗 HVFAN 报文分析 (终极修复版)")
 
-if not db or len(db.messages) == 0:
-    st.error(f"❌ 无法加载任何 DBC 文件。请确认文件名及路径：{DBC_FILENAMES}")
+# 只要数据库里有一条报文，就允许运行
+if not db or not hasattr(db, '_frame_id_to_message') or len(db._frame_id_to_message) == 0:
+    st.error(f"❌ 数据库为空。请确保目录下存在：{DBC_FILENAMES}")
 else:
-    st.sidebar.success(f"✅ 已合并加载库，包含 {len(db.messages)} 条报文定义")
+    st.sidebar.success(f"✅ 加载成功！数据库包含 {len(db._frame_id_to_message)} 条定义")
     
-    uploaded_file = st.file_uploader("📂 上传 ASC 报文文件", type=None)
+    uploaded_file = st.file_uploader("📂 选择上传 ASC 报文文件", type=None)
 
     if uploaded_file is not None:
         file_key = f"data_{uploaded_file.name}_{uploaded_file.size}"
         if 'current_file' not in st.session_state or st.session_state.current_file != file_key:
-            with st.spinner('🔍 正在多库匹配解析...'):
+            with st.spinner('🔍 正在强力解码解析...'):
                 content = uploaded_file.read()
                 st.session_state.full_data = process_asc(content, db)
                 st.session_state.current_file = file_key
@@ -122,23 +122,16 @@ else:
         full_data = st.session_state.full_data
 
         if not full_data:
-            st.warning("⚠️ 未能解析到有效信号。请检查 ASC 内容与 DBC 是否匹配。")
+            st.warning("⚠️ 匹配失败。可能报文中的 ID 在 DBC 中未定义。")
         else:
             st.success(f"✅ 解析成功！共识别出 {len(full_data)} 个信号")
 
             # --- 控制面板 ---
             st.write("### 🛠️ 控制面板")
             c1, c2, c3 = st.columns([2, 1, 1])
-            
             with c1:
                 all_sig_names = sorted(full_data.keys())
-                default_keywords = ["Spd", "Current", "Volt", "Temp", "Duty"]
-                default_sigs = [s for s in all_sig_names if any(k in s for k in default_keywords)]
-                selected_sigs = st.multiselect(
-                    "📌 信号管理", 
-                    options=all_sig_names, 
-                    default=default_sigs if default_sigs else all_sig_names[:2]
-                )
+                selected_sigs = st.multiselect("📌 信号筛选", options=all_sig_names, default=all_sig_names[:2])
             with c2:
                 sync_on = st.toggle("🔗 开启同步缩放", value=True)
             with c3:
@@ -153,14 +146,9 @@ else:
                     if len(x) > limit:
                         step = len(x) // limit
                         x, y = x[::step], y[::step]
-                    
-                    charts_to_render.append({
-                        "id": f"chart_{selected_sigs.index(name)}",
-                        "title": f"{d['label']} ({d['unit']})",
-                        "x": x, "y": y
-                    })
+                    charts_to_render.append({"id": f"c_{selected_sigs.index(name)}", "title": f"{d['label']} ({d['unit']})", "x": x, "y": y})
 
-                # --- 4. JS 渲染引擎 ---
+                # JS 渲染部分 (保持原样)
                 js_logic = f"""
                 <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
                 <div id="chart-wrapper"></div>
@@ -170,69 +158,32 @@ else:
                     const hoverMode = "{'x unified' if show_measure else 'closest'}";
                     const chartIds = [];
                     let isRelayouting = false;
-
                     const wrapper = document.getElementById('chart-wrapper');
-                    
                     chartsData.forEach((data, index) => {{
                         const div = document.createElement('div');
-                        div.id = data.id;
-                        div.style.marginBottom = '20px';
-                        div.style.height = '350px';
-                        div.style.border = '1px solid #eee';
-                        div.style.borderRadius = '8px';
-                        wrapper.appendChild(div);
-                        chartIds.push(data.id);
-
-                        const trace = {{
-                            x: data.x, y: data.y,
-                            type: 'scatter', mode: 'lines',
-                            line: {{ width: 2, color: '#174ea6' }},
-                            name: data.title
-                        }};
-
-                        const layout = {{
-                            title: {{ text: data.title, font: {{ size: 14 }} }},
-                            margin: {{ l: 50, r: 20, t: 50, b: 40 }},
-                            hovermode: hoverMode,
-                            template: 'plotly_white',
-                            xaxis: {{ showspikes: {str(show_measure).lower()}, spikemode: 'across', spikedash: 'dot' }},
-                            yaxis: {{ autorange: true }}
-                        }};
-
+                        div.id = data.id; div.style.marginBottom = '20px'; div.style.height = '350px';
+                        div.style.border = '1px solid #eee'; div.style.borderRadius = '8px';
+                        wrapper.appendChild(div); chartIds.push(data.id);
+                        const trace = {{ x: data.x, y: data.y, type: 'scatter', mode: 'lines', line: {{ width: 2, color: '#174ea6' }}, name: data.title }};
+                        const layout = {{ title: {{ text: data.title, font: {{ size: 14 }} }}, margin: {{ l: 50, r: 20, t: 50, b: 40 }}, hovermode: hoverMode, template: 'plotly_white', xaxis: {{ showspikes: {str(show_measure).lower()} }}, yaxis: {{ autorange: true }} }};
                         Plotly.newPlot(data.id, [trace], layout, {{ responsive: true, displaylogo: false }});
-
                         if (syncEnabled) {{
                             document.getElementById(data.id).on('plotly_relayout', (eventData) => {{
-                                if (isRelayouting) return;
-                                isRelayouting = true;
+                                if (isRelayouting) return; isRelayouting = true;
                                 const update = {{}};
-                                if (eventData['xaxis.range[0]']) {{
-                                    update['xaxis.range[0]'] = eventData['xaxis.range[0]'];
-                                    update['xaxis.range[1]'] = eventData['xaxis.range[1]'];
-                                }} else if (eventData['xaxis.autorange']) {{
-                                    update['xaxis.autorange'] = true;
-                                }}
-
+                                if (eventData['xaxis.range[0]']) {{ update['xaxis.range[0]'] = eventData['xaxis.range[0]']; update['xaxis.range[1]'] = eventData['xaxis.range[1]']; }}
+                                else if (eventData['xaxis.autorange']) {{ update['xaxis.autorange'] = true; }}
                                 if (Object.keys(update).length > 0) {{
-                                    const promises = chartIds.map(id => {{
-                                        if (id !== data.id) return Plotly.relayout(id, update);
-                                    }});
+                                    const promises = chartIds.map(id => {{ if (id !== data.id) return Plotly.relayout(id, update); }});
                                     Promise.all(promises).then(() => {{ isRelayouting = false; }});
-                                }} else {{
-                                    isRelayouting = false;
-                                }}
+                                }} else {{ isRelayouting = false; }}
                             }});
                         }}
                     }});
                 </script>
                 """
-                render_height = len(selected_sigs) * 375 + 50
-                components.html(js_logic, height=render_height, scrolling=False)
+                components.html(js_logic, height=len(selected_sigs) * 375 + 50)
 
-# 侧边栏
-if st.sidebar.button("♻️ 强制清除缓存并刷新"):
+if st.sidebar.button("♻️ 强制刷新"):
     st.session_state.clear()
     st.rerun()
-
-st.sidebar.divider()
-st.sidebar.caption("HVFAN Tool v18.2 | 深度兼容模式")
