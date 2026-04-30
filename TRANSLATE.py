@@ -6,7 +6,6 @@ import json
 import streamlit.components.v1 as components
 
 # ===================== 1. 核心配置 =====================
-# 请确保此处的下划线/空格与你仓库中的文件名完全一致
 DBC_FILENAME = 'Geely_TMCU_V1.1_20250513_PrivateCAN_10.dbc'
 st.set_page_config(page_title="HVFAN 报文分析系统", layout="wide")
 
@@ -15,23 +14,24 @@ st.set_page_config(page_title="HVFAN 报文分析系统", layout="wide")
 @st.cache_resource
 def load_dbc_engine(uploaded_file=None):
     """
-    核心修复：处理 UploadedFile 对象与文件路径的兼容性[cite: 1]
+    核心修复：添加 strict=False 以忽略 DBC 中的信号重叠错误
     """
     try:
         if uploaded_file is not None:
-            # 解决 image_0f0d5d.png 中的报错：将上传的文件流读取为字符串[cite: 1]
+            # 读取上传的文件内容
             dbc_content = uploaded_file.read().decode('gbk', errors='ignore')
-            return cantools.database.load_string(dbc_content)
+            # strict=False 允许解析包含重叠信号的非规范 DBC
+            return cantools.database.load_string(dbc_content, strict=False)
         elif os.path.exists(DBC_FILENAME):
-            # 如果本地存在预设文件
-            return cantools.database.load_file(DBC_FILENAME, encoding='gbk')
+            # 本地加载也需开启非严格模式
+            return cantools.database.load_file(DBC_FILENAME, encoding='gbk', strict=False)
     except Exception as e:
         st.sidebar.error(f"DBC解析失败: {str(e)}")
     return None
 
 def process_asc(file_content, db):
     data_dict = {}
-    # 针对 Vector ASC 格式的精确匹配正则[cite: 2]
+    # 针对 Vector ASC 格式的精确匹配正则
     frame_re = re.compile(
         r'^\s*(?P<time>\d+\.\d+)\s+(?P<channel>\d+)\s+(?P<id>[0-9A-Fa-f]+)x\s+(?:Rx|Tx)\s+d\s+(?P<dlc>\d+)\s+(?P<data>(?:[0-9A-Fa-f]{2}\s*)+)', 
         re.MULTILINE
@@ -56,7 +56,7 @@ def process_asc(file_content, db):
                 raw_payload = bytearray.fromhex(hex_data)
                 
                 msg = None
-                # J1939 29位扩展帧兼容性匹配逻辑[cite: 1, 2]
+                # J1939 29位扩展帧兼容性匹配逻辑
                 for search_id in [raw_id, raw_id & 0x1FFFFFFF, raw_id & 0x00FFFFFF]:
                     try:
                         msg = db.get_message_by_frame_id(search_id)
@@ -65,7 +65,7 @@ def process_asc(file_content, db):
                 
                 if not msg: continue
                 
-                # 数据长度自动补齐[cite: 1]
+                # 数据长度自动补齐
                 if len(raw_payload) < msg.length:
                     raw_payload = raw_payload.ljust(msg.length, b'\x00')
 
@@ -97,11 +97,12 @@ with st.sidebar:
     uploaded_dbc = st.file_uploader("手动上传 DBC 文件", type=['dbc'])
     st.caption("提示：若云端环境找不到预设 DBC，请在此处直接上传。")
 
+# 加载 DBC 引擎
 db = load_dbc_engine(uploaded_dbc)
 
 if not db:
-    # 对应 image_0f11b8.png 中的错误场景
-    st.error(f"❌ 协议库未就绪。本地未找到 {DBC_FILENAME}，且未通过侧边栏上传。")
+    # 错误提示：对应 image_0e2539.png 中的报错场景
+    st.error(f"❌ 协议库未就绪。请确保本地存在 {DBC_FILENAME} 或通过侧边栏手动上传有效的 DBC 文件。")
     st.stop()
 else:
     st.success(f"✅ DBC 解析成功：包含 {len(db.messages)} 条报文定义。")
@@ -144,7 +145,7 @@ else:
                         x, y = x[::step], y[::step]
                     charts_to_render.append({"id": f"chart_{hash(name)}", "title": f"{name} ({d['unit']})", "x": x, "y": y})
 
-                # --- Plotly 渲染逻辑（已处理双花括号转义） ---
+                # --- Plotly 渲染逻辑 ---
                 js_logic = f"""
                 <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
                 <div id="chart-container"></div>
