@@ -6,7 +6,7 @@ import json
 import streamlit.components.v1 as components
 
 # ===================== 1. 核心配置 =====================
-DBC_FILENAME = 'Geely_TMCU_V1.1_20250513_PrivateCAN 10.dbc'
+DBC_FILENAME = 'Geely_TMCU_V1.1_20250513_PrivateCAN_10.dbc'
 st.set_page_config(page_title="HVFAN 报文分析系统", layout="wide")
 
 # ===================== 2. 解析引擎 =====================
