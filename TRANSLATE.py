@@ -6,7 +6,7 @@ import json
 import streamlit.components.v1 as components
 
 # ===================== 1. 核心配置 =====================
-DBC_FILENAME = 'HVFAN_CANMatrix_20241015_FAW_HVIL.dbc'
+DBC_FILENAME = 'HVFAN_Merged_Geely_Foton_FAW_Master.dbc'
 st.set_page_config(page_title="HVFAN 综合分析系统", layout="wide")
 
 # ===================== 2. 解析引擎 (带缓存与多编码支持) =====================
