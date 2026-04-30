@@ -6,18 +6,26 @@ import json
 import streamlit.components.v1 as components
 
 # ===================== 1. 核心配置 =====================
+# 注意：请确保此处的下划线/空格与你仓库中的文件名完全一致
 DBC_FILENAME = 'Geely_TMCU_V1.1_20250513_PrivateCAN_10.dbc'
 st.set_page_config(page_title="HVFAN 报文分析系统", layout="wide")
 
 # ===================== 2. 解析引擎 =====================
+
 @st.cache_resource
-def load_dbc():
-    if os.path.exists(DBC_FILENAME):
-        for encoding in ['gbk', 'utf-8', 'latin-1']:
-            try:
-                return cantools.database.load_file(DBC_FILENAME, encoding=encoding)
-            except:
-                continue
+def load_dbc_engine(uploaded_file=None):
+    """
+    加载DBC的逻辑：优先使用上传的文件，其次尝试读取本地预设路径
+    """
+    try:
+        if uploaded_file is not None:
+            # 如果用户手动上传了文件
+            return cantools.database.load_file(uploaded_file, encoding='gbk')
+        elif os.path.exists(DBC_FILENAME):
+            # 如果本地存在预设文件
+            return cantools.database.load_file(DBC_FILENAME, encoding='gbk')
+    except Exception as e:
+        st.sidebar.error(f"DBC加载失败: {str(e)}")
     return None
 
 def process_asc(file_content, db):
@@ -33,8 +41,7 @@ def process_asc(file_content, db):
             text_data = file_content.decode(enc, errors='ignore')
             if "Rx" in text_data or "Tx" in text_data: 
                 break
-        except: 
-            continue
+        except: continue
             
     lines = [l.strip() for l in text_data.splitlines() if l.strip()]
     for line in lines:
@@ -47,12 +54,12 @@ def process_asc(file_content, db):
                 raw_payload = bytearray.fromhex(hex_data)
                 
                 msg = None
+                # J1939 兼容性匹配
                 for search_id in [raw_id, raw_id & 0x1FFFFFFF, raw_id & 0x00FFFFFF]:
                     try:
                         msg = db.get_message_by_frame_id(search_id)
                         if msg: break
-                    except KeyError:
-                        continue
+                    except KeyError: continue
                 
                 if not msg: continue
                 if len(raw_payload) < msg.length:
@@ -78,18 +85,30 @@ def process_asc(file_content, db):
     return data_dict
 
 # ===================== 3. UI 交互 =====================
-db = load_dbc()
-st.title("🚗 HVFAN 报文高级分析 (正式修复版)")
+st.title("🚗 HVFAN 报文高级分析 (修复集成版)")
+
+# 侧边栏：允许手动上传 DBC 以应对文件找不到的情况
+with st.sidebar:
+    st.header("⚙️ 协议设置")
+    uploaded_dbc = st.file_uploader("可选：手动上传 DBC 文件", type=['dbc'])
+    st.info("如果页面提示找不到默认 DBC，请在此处上传。")
+
+# 加载数据库
+db = load_dbc_engine(uploaded_dbc)
 
 if not db:
-    st.error(f"❌ 未找到 DBC 文件: {DBC_FILENAME}")
+    # 这里的错误提示参考了 image_018f8.png 中的表现
+    st.error(f"❌ 协议库未就绪。原因：在本地未找到 {DBC_FILENAME}，且未在侧边栏上传 DBC。")
+    st.stop()
 else:
+    st.success(f"✅ DBC 已加载：匹配到 {len(db.messages)} 条报文。")
+    
     uploaded_file = st.file_uploader("📂 上传 ASC 原始报文文件", type=['asc', 'txt'])
 
     if uploaded_file is not None:
         file_key = f"data_{uploaded_file.name}_{uploaded_file.size}"
         if 'current_file' not in st.session_state or st.session_state.current_file != file_key:
-            with st.spinner('🔍 正在解析...'):
+            with st.spinner('🔍 正在解析报文...'):
                 content = uploaded_file.read()
                 st.session_state.full_data = process_asc(content, db)
                 st.session_state.current_file = file_key
@@ -97,13 +116,13 @@ else:
         full_data = st.session_state.full_data
 
         if not full_data:
-            st.warning("⚠️ 未匹配到有效信号。")
+            st.warning("⚠️ 报文解析完成，但根据当前 DBC 未匹配到任何已知 ID 的数据。")
         else:
             with st.expander("🛠️ 信号显示设置", expanded=True):
                 c1, c2, c3 = st.columns([3, 1, 1])
                 with c1:
                     all_sig_names = sorted(full_data.keys())
-                    selected_sigs = st.multiselect("选择信号:", options=all_sig_names, default=all_sig_names[:1])
+                    selected_sigs = st.multiselect("选择要分析的信号:", options=all_sig_names, default=all_sig_names[:1])
                 with c2:
                     sync_on = st.toggle("🔗 同步缩放", value=True)
                 with c3:
@@ -114,12 +133,13 @@ else:
                 for name in selected_sigs:
                     d = full_data[name]
                     x, y = d['x'], d['y']
+                    # 数据抽稀：防止点数过多导致浏览器卡顿
                     if len(x) > 20000:
                         step = len(x) // 20000
                         x, y = x[::step], y[::step]
                     charts_to_render.append({"id": f"chart_{hash(name)}", "title": f"{name} ({d['unit']})", "x": x, "y": y})
 
-                # --- 重点修复部分：双花括号转移 ---
+                # JS 绘图逻辑
                 js_logic = f"""
                 <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
                 <div id="chart-container"></div>
