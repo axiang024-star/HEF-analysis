@@ -6,7 +6,7 @@ import json
 import streamlit.components.v1 as components
 
 # ===================== 1. 核心配置 =====================
-# 注意：请确保此处的下划线/空格与你仓库中的文件名完全一致
+# 请确保此处的下划线/空格与你仓库中的文件名完全一致
 DBC_FILENAME = 'Geely_TMCU_V1.1_20250513_PrivateCAN_10.dbc'
 st.set_page_config(page_title="HVFAN 报文分析系统", layout="wide")
 
@@ -15,21 +15,23 @@ st.set_page_config(page_title="HVFAN 报文分析系统", layout="wide")
 @st.cache_resource
 def load_dbc_engine(uploaded_file=None):
     """
-    加载DBC的逻辑：优先使用上传的文件，其次尝试读取本地预设路径
+    核心修复：处理 UploadedFile 对象与文件路径的兼容性[cite: 1]
     """
     try:
         if uploaded_file is not None:
-            # 如果用户手动上传了文件
-            return cantools.database.load_file(uploaded_file, encoding='gbk')
+            # 解决 image_0f0d5d.png 中的报错：将上传的文件流读取为字符串[cite: 1]
+            dbc_content = uploaded_file.read().decode('gbk', errors='ignore')
+            return cantools.database.load_string(dbc_content)
         elif os.path.exists(DBC_FILENAME):
             # 如果本地存在预设文件
             return cantools.database.load_file(DBC_FILENAME, encoding='gbk')
     except Exception as e:
-        st.sidebar.error(f"DBC加载失败: {str(e)}")
+        st.sidebar.error(f"DBC解析失败: {str(e)}")
     return None
 
 def process_asc(file_content, db):
     data_dict = {}
+    # 针对 Vector ASC 格式的精确匹配正则[cite: 2]
     frame_re = re.compile(
         r'^\s*(?P<time>\d+\.\d+)\s+(?P<channel>\d+)\s+(?P<id>[0-9A-Fa-f]+)x\s+(?:Rx|Tx)\s+d\s+(?P<dlc>\d+)\s+(?P<data>(?:[0-9A-Fa-f]{2}\s*)+)', 
         re.MULTILINE
@@ -54,7 +56,7 @@ def process_asc(file_content, db):
                 raw_payload = bytearray.fromhex(hex_data)
                 
                 msg = None
-                # J1939 兼容性匹配
+                # J1939 29位扩展帧兼容性匹配逻辑[cite: 1, 2]
                 for search_id in [raw_id, raw_id & 0x1FFFFFFF, raw_id & 0x00FFFFFF]:
                     try:
                         msg = db.get_message_by_frame_id(search_id)
@@ -62,6 +64,8 @@ def process_asc(file_content, db):
                     except KeyError: continue
                 
                 if not msg: continue
+                
+                # 数据长度自动补齐[cite: 1]
                 if len(raw_payload) < msg.length:
                     raw_payload = raw_payload.ljust(msg.length, b'\x00')
 
@@ -84,45 +88,46 @@ def process_asc(file_content, db):
             except: continue
     return data_dict
 
-# ===================== 3. UI 交互 =====================
-st.title("🚗 HVFAN 报文高级分析 (修复集成版)")
+# ===================== 3. UI 交互逻辑 =====================
+st.title("🚗 HVFAN 报文分析系统 (修复集成版)")
 
-# 侧边栏：允许手动上传 DBC 以应对文件找不到的情况
+# 侧边栏：处理 DBC 加载
 with st.sidebar:
-    st.header("⚙️ 协议设置")
-    uploaded_dbc = st.file_uploader("可选：手动上传 DBC 文件", type=['dbc'])
-    st.info("如果页面提示找不到默认 DBC，请在此处上传。")
+    st.header("⚙️ 协议库设置")
+    uploaded_dbc = st.file_uploader("手动上传 DBC 文件", type=['dbc'])
+    st.caption("提示：若云端环境找不到预设 DBC，请在此处直接上传。")
 
-# 加载数据库
 db = load_dbc_engine(uploaded_dbc)
 
 if not db:
-    # 这里的错误提示参考了 image_018f8.png 中的表现
-    st.error(f"❌ 协议库未就绪。原因：在本地未找到 {DBC_FILENAME}，且未在侧边栏上传 DBC。")
+    # 对应 image_0f11b8.png 中的错误场景
+    st.error(f"❌ 协议库未就绪。本地未找到 {DBC_FILENAME}，且未通过侧边栏上传。")
     st.stop()
 else:
-    st.success(f"✅ DBC 已加载：匹配到 {len(db.messages)} 条报文。")
+    st.success(f"✅ DBC 解析成功：包含 {len(db.messages)} 条报文定义。")
     
-    uploaded_file = st.file_uploader("📂 上传 ASC 原始报文文件", type=['asc', 'txt'])
+    # ASC 文件上传
+    uploaded_asc = st.file_uploader("📂 上传 ASC 原始报文文件", type=['asc', 'txt'])
 
-    if uploaded_file is not None:
-        file_key = f"data_{uploaded_file.name}_{uploaded_file.size}"
+    if uploaded_asc is not None:
+        file_key = f"data_{uploaded_asc.name}_{uploaded_asc.size}"
         if 'current_file' not in st.session_state or st.session_state.current_file != file_key:
-            with st.spinner('🔍 正在解析报文...'):
-                content = uploaded_file.read()
+            with st.spinner('🔍 正在解析报文信号...'):
+                content = uploaded_asc.read()
                 st.session_state.full_data = process_asc(content, db)
                 st.session_state.current_file = file_key
         
         full_data = st.session_state.full_data
 
         if not full_data:
-            st.warning("⚠️ 报文解析完成，但根据当前 DBC 未匹配到任何已知 ID 的数据。")
+            st.warning("⚠️ 解析完成，但未在报文中找到符合 DBC 定义的信号数据。请检查 ID 是否匹配。")
         else:
+            # 交互控制面板
             with st.expander("🛠️ 信号显示设置", expanded=True):
                 c1, c2, c3 = st.columns([3, 1, 1])
                 with c1:
                     all_sig_names = sorted(full_data.keys())
-                    selected_sigs = st.multiselect("选择要分析的信号:", options=all_sig_names, default=all_sig_names[:1])
+                    selected_sigs = st.multiselect("选择分析信号:", options=all_sig_names, default=all_sig_names[:1])
                 with c2:
                     sync_on = st.toggle("🔗 同步缩放", value=True)
                 with c3:
@@ -133,13 +138,13 @@ else:
                 for name in selected_sigs:
                     d = full_data[name]
                     x, y = d['x'], d['y']
-                    # 数据抽稀：防止点数过多导致浏览器卡顿
+                    # 数据保护：超过 20k 点进行抽稀处理
                     if len(x) > 20000:
                         step = len(x) // 20000
                         x, y = x[::step], y[::step]
                     charts_to_render.append({"id": f"chart_{hash(name)}", "title": f"{name} ({d['unit']})", "x": x, "y": y})
 
-                # JS 绘图逻辑
+                # --- Plotly 渲染逻辑（已处理双花括号转义） ---
                 js_logic = f"""
                 <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
                 <div id="chart-container"></div>
